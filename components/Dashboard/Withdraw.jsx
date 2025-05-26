@@ -10,11 +10,7 @@ const WithdrawRequestPage = () => {
   const [step, setStep] = useState("form");
   const [amount, setAmount] = useState(0);
   const [selectedWallet, setSelectedWallet] = useState(null);
-<<<<<<< HEAD
-  const { userInvestment, userId, userWallets } = useFirebase();
-=======
   const { userInvestment, userId, userData, userWallets } = useFirebase();
->>>>>>> 88f430a23511ba76bf4651044d62f4d2fb011b0a
   const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState('success');
   const [notificationMessage, setNotificationMessage] = useState('N/a');
