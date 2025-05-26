@@ -29,15 +29,15 @@ function About() {
   return (
     <>
       <Head>
-        <title>About Us | Delta Neutral</title>
-        <meta name="description" content="Learn about Delta Neutral – a firm blending cryptocurrency, renewable energy, agriculture, and gold to create balanced, future-focused investments." />
+        <title>About Us | Rosnept</title>
+        <meta name="description" content="Learn about Rosnept – a firm blending cryptocurrency, renewable energy, agriculture, and gold to create balanced, future-focused investments." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
         <Navbar />
         <HeroBanner
             image="/img-5.jpg"
             title="Who We Are"
-            description="Delta Neutral combines innovation and sustainability to deliver smarter investment strategies in cryptocurrency, energy, agriculture, and gold."
+            description="Rosnept combines innovation and sustainability to deliver smarter investment strategies in cryptocurrency, energy, agriculture, and gold."
         />
         <DeltaNeutralIntro />
         <TopCryptos />

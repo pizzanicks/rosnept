@@ -24,7 +24,7 @@ export default function IntroSection() {
 
           {/* Paragraph */}
           <p className="text-gray-700 text-sm md:text-base max-w-xl font-barlow">
-            At Delta Neutral, we help you grow wealth through impact-driven investments. Our strategy blends high-yield crypto opportunities, renewable energy infrastructure, and sustainable agriculture—three powerful pillars shaping the future. With weekly returns, transparent performance, and built-in risk management, we make it easy to invest with confidence and conscience. Whether you're building your portfolio or seeking stable diversification, Delta Neutral bridges innovation with long-term value.
+            At Rosnept, we help you grow wealth through impact-driven investments. Our strategy blends high-yield crypto opportunities, renewable energy infrastructure, and sustainable agriculture—three powerful pillars shaping the future. With weekly returns, transparent performance, and built-in risk management, we make it easy to invest with confidence and conscience. Whether you're building your portfolio or seeking stable diversification, Rosnept bridges innovation with long-term value.
           </p>
 
           {/* Button */}

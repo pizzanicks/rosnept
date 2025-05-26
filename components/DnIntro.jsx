@@ -18,7 +18,7 @@ export default function DeltaNeutralIntro() {
                 >
                 <Image
                     src="/hr-3.jpg"
-                    alt="Delta Neutral Strategy"
+                    alt="Rosnept Strategy"
                     fill
                     className="object-cover"
                 />
@@ -48,12 +48,12 @@ export default function DeltaNeutralIntro() {
           transition={{ duration: 0.7 }}
           viewport={{ once: true }}
         >
-          <p className="text-sm uppercase text-gray-500 mb-2">About Delta Neutral</p>
+          <p className="text-sm uppercase text-gray-500 mb-2">About Rosnept</p>
           <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 font-garamond">
             Bridging Innovation with Sustainability
           </h2>
           <p className="text-sm md:text-base text-gray-700 leading-relaxed font-barlow">
-            Delta Neutral is a forward-thinking investment firm focused on sustainable returns through a balanced strategy across cryptocurrency, renewable energy, agriculture, and gold. Our mission is to empower investors with smart, secure, and socially responsible investment opportunities that perform in any market condition.
+            Rosnept is a forward-thinking investment firm focused on sustainable returns through a balanced strategy across cryptocurrency, renewable energy, agriculture, and gold. Our mission is to empower investors with smart, secure, and socially responsible investment opportunities that perform in any market condition.
           </p>
         </motion.div>
       </div>

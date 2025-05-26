@@ -12,7 +12,7 @@ export default function Footer() {
           <div>
             <Image src={'/logo-1.png'} height={500} width={500} alt='logo image' className="w-44 lg:w-80 h-12 lg:h-20 mb-6" />
             <p className="text-sm lg:text-base mb-4 font-barlow">
-              Delta Neutral is at the intersection of cryptocurrency and sustainable energy investments, offering innovative solutions for eco-friendly portfolios and sustainable growth.
+              Rosnept is at the intersection of cryptocurrency and sustainable energy investments, offering innovative solutions for eco-friendly portfolios and sustainable growth.
             </p>
             <div className="flex space-x-6">
               <Link href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
@@ -61,7 +61,7 @@ export default function Footer() {
         {/* Footer Bottom */}
         <div className="mt-16 border-t border-gray-700 pt-8 text-center">
           <p className="text-sm text-gray-400 font-barlow">
-            &copy; {new Date().getFullYear()} Delta Neutral. All rights reserved.
+            &copy; {new Date().getFullYear()} Rosnept. All rights reserved.
           </p>
         </div>
       </div>

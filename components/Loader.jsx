@@ -8,7 +8,7 @@ const Loader = () => {
         <div className="circle delay-1" />
         <div className="circle delay-2" />
       </div>
-      <div className="text-white text-sm md:text-base uppercase mt-4 font-medium font-barlow">Delta Neutral</div>
+      <div className="text-white text-sm md:text-base uppercase mt-4 font-medium font-barlow">Rosnept</div>
     </div>
   );
 };

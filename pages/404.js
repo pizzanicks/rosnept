@@ -6,7 +6,7 @@ export default function Custom404() {
   return (
     <>
       <Head>
-        <title>Page Not Found | Delta Neutral</title>
+        <title>Page Not Found | Rosnept</title>
       </Head>
 
       <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white px-6 text-center">
@@ -51,7 +51,7 @@ export default function Custom404() {
           transition={{ delay: 1 }}
           className="mt-6 text-sm text-gray-600"
         >
-          &copy; {new Date().getFullYear()} Delta Neutral
+          &copy; {new Date().getFullYear()} Rosnept
         </motion.p>
       </div>
     </>

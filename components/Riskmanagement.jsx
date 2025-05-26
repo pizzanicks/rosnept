@@ -20,7 +20,7 @@ export default function RiskManagement() {
             Risk Management Meets Precision
           </h2>
           <p className="text-sm md:text-base text-gray-300 leading-relaxed font-barlow">
-            At Delta Neutral, we blend advanced algorithms with strategic oversight to manage risk with precision. Our disciplined framework spans asset allocation, hedging, and real-time monitoring to minimize volatility while maximizing potential. Each investment decision is backed by data, experience, and proactive controls to protect capital and seize opportunity. Whether markets rise or fall, our resilient approach ensures your portfolio stays on track. Grow your wealth with confidence, knowing that every move is calculated for stability, performance, and long-term success.
+            At Rosnept, we blend advanced algorithms with strategic oversight to manage risk with precision. Our disciplined framework spans asset allocation, hedging, and real-time monitoring to minimize volatility while maximizing potential. Each investment decision is backed by data, experience, and proactive controls to protect capital and seize opportunity. Whether markets rise or fall, our resilient approach ensures your portfolio stays on track. Grow your wealth with confidence, knowing that every move is calculated for stability, performance, and long-term success.
           </p>
         </motion.div>
 

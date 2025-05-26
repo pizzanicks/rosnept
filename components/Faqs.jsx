@@ -4,9 +4,9 @@ import { FaChevronDown } from "react-icons/fa";
 
 const faqs = [
   {
-    question: "What is Delta Neutral?",
+    question: "What is Rosnept?",
     answer:
-      "Delta Neutral is a forward-thinking investment platform combining cryptocurrency, clean energy, agriculture, and precious metals. Our strategies are built for sustainable growth and minimized risk.",
+      "Rosnept is a forward-thinking investment platform combining cryptocurrency, clean energy, agriculture, and precious metals. Our strategies are built for sustainable growth and minimized risk.",
   },
   {
     question: "How do I start investing?",
@@ -21,7 +21,7 @@ const faqs = [
   {
     question: "Is my investment secure?",
     answer:
-      "Security is a top priority at Delta Neutral. We leverage encrypted systems, risk-managed portfolios, and trusted third-party integrations to ensure your capital remains protected.",
+      "Security is a top priority at Rosnept. We leverage encrypted systems, risk-managed portfolios, and trusted third-party integrations to ensure your capital remains protected.",
   },
 ];
 
@@ -37,7 +37,7 @@ const FaqSection = () => {
       <div className="max-w-7xl mx-auto">
         <div className="text-start md:text-center mb-12">
           <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 font-garamond">Frequently Asked Questions</h2>
-          <p className="text-sm md:text-base text-gray-700 leading-relaxed font-barlow">Everything you need to know before investing with Delta Neutral.</p>
+          <p className="text-sm md:text-base text-gray-700 leading-relaxed font-barlow">Everything you need to know before investing with Rosnept.</p>
         </div>
 
         <div className="space-y-4">

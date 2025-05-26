@@ -28,10 +28,10 @@ function services() {
   return (
     <>
         <Head>
-          <title>Our Services | Delta Neutral</title>
+          <title>Our Services | Rosnept</title>
           <meta
             name="description"
-            content="Delta Neutral offers diversified investment strategies focusing on sustainable returns across cryptocurrency, renewable energy, and other future-forward sectors. We create tailored solutions to meet your financial goals."
+            content="Rosnept offers diversified investment strategies focusing on sustainable returns across cryptocurrency, renewable energy, and other future-forward sectors. We create tailored solutions to meet your financial goals."
           />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
@@ -39,7 +39,7 @@ function services() {
         <HeroBanner
             image="/img-2.jpg"
             title="Our Services"
-            description="Delta Neutral offers diversified investment strategies focusing on sustainable returns across cryptocurrency, renewable energy, and other future-forward sectors. We create tailored solutions to meet your financial goals."
+            description="Rosnept offers diversified investment strategies focusing on sustainable returns across cryptocurrency, renewable energy, and other future-forward sectors. We create tailored solutions to meet your financial goals."
         />
         <ServicesOverview />
         <Testimonials />
