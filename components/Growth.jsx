@@ -29,7 +29,7 @@ export default function SustainableGrowthSection() {
             <p className="text-sm uppercase text-gray-500 mb-2">Sustainability</p>
             <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-4 font-garamond">Investing in a Sustainable Future</h2>
             <p className="text-sm lg:text-base text-gray-700 leading-relaxed font-barlow">
-              At Delta Neutral, we believe that true growth comes from investing in industries that promote environmental responsibility and social good. Our investment strategies are designed to focus on clean energy, green technology, and other sustainable sectors. We are committed to generating long-term financial returns while also contributing positively to the planet and society. Together, we can create a brighter, more sustainable future.
+              At Rosnept, we believe that true growth comes from investing in industries that promote environmental responsibility and social good. Our investment strategies are designed to focus on clean energy, green technology, and other sustainable sectors. We are committed to generating long-term financial returns while also contributing positively to the planet and society. Together, we can create a brighter, more sustainable future.
             </p>
           </div>
         </div>

@@ -8,7 +8,7 @@ const services = [
     {
       title: 'Cryptocurrency Investments',
       description:
-        'Delta Neutral provides a structured approach to cryptocurrency investing, combining innovation with strategic risk management. Our team helps you tap into high-growth digital assets while minimizing exposure to volatility. With tailored strategies, we make it easier for you to confidently invest in the future of decentralized finance.',
+        'Rosnept provides a structured approach to cryptocurrency investing, combining innovation with strategic risk management. Our team helps you tap into high-growth digital assets while minimizing exposure to volatility. With tailored strategies, we make it easier for you to confidently invest in the future of decentralized finance.',
       cta: 'Get Started',
       href: '/plans',
       image: '/bg-201.jpg',
@@ -16,7 +16,7 @@ const services = [
     {
       title: 'Agro Investment',
       description:
-        'Delta Neutral connects you to impactful agricultural investments that promote food security and innovation. Our ventures focus on sustainable farming, agritech, and regenerative practices. We help you grow your capital by backing initiatives that nourish communities and the planet while delivering strong, consistent performance in your portfolio.',
+        'Rosnept connects you to impactful agricultural investments that promote food security and innovation. Our ventures focus on sustainable farming, agritech, and regenerative practices. We help you grow your capital by backing initiatives that nourish communities and the planet while delivering strong, consistent performance in your portfolio.',
       cta: 'Build Portfolio',
       href: '/plans',
       image: '/sv-1.jpg',
@@ -24,7 +24,7 @@ const services = [
     {
         title: 'Clean Energy Projects',
         description:
-          'At Delta Neutral, we believe in powering portfolios through sustainability. Our clean energy investments focus on renewable technologies that drive long-term returns while supporting a greener planet. From solar to wind, we offer access to transformative energy projects designed for modern investors seeking purpose-driven performance.',
+          'At Rosnept, we believe in powering portfolios through sustainability. Our clean energy investments focus on renewable technologies that drive long-term returns while supporting a greener planet. From solar to wind, we offer access to transformative energy projects designed for modern investors seeking purpose-driven performance.',
         cta: 'Explore Plans',
         href: '/plans',
         image: '/sv-4.jpg',
@@ -32,7 +32,7 @@ const services = [
     {
       title: 'Gold-backed Stability',
       description:
-        'Gold has long been a cornerstone of wealth preservation. Delta Neutral offers modern gold investment solutions that anchor your portfolio with time-tested security. In uncertain markets, our gold-backed strategies provide dependable value and protection, helping you achieve financial resilience with a legacy asset that never goes out of style.',
+        'Gold has long been a cornerstone of wealth preservation. Rosnept offers modern gold investment solutions that anchor your portfolio with time-tested security. In uncertain markets, our gold-backed strategies provide dependable value and protection, helping you achieve financial resilience with a legacy asset that never goes out of style.',
       cta: 'Start Investing',
       href: '/plans',
       image: '/blg-3.jpg',

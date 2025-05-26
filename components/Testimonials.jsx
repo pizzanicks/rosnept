@@ -9,7 +9,7 @@ import { FaStar, FaQuoteRight } from 'react-icons/fa';
 const testimonials = [
   {
     quote:
-      "Delta Neutral has completely transformed how I think about investing. Their unique blend of algorithmic strategies and sustainability gives me peace of mind and consistent growth I can rely on.",
+      "Rosnept has completely transformed how I think about investing. Their unique blend of algorithmic strategies and sustainability gives me peace of mind and consistent growth I can rely on.",
     name: "Leila Morissette",
     role: "Impact Venture Builder",
     image: "/per-1.png",

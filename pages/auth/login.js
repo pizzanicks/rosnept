@@ -88,7 +88,7 @@ export default function LoginPage() {
   return (
     <>
       <Head>
-        <title>Login | Delta Neutral</title>
+        <title>Login | Rosnept</title>
       </Head>
 
       <div className="relative w-full min-h-screen bg-cover bg-center" style={{ backgroundImage: `url('/cta.jpg')` }}>
@@ -99,7 +99,7 @@ export default function LoginPage() {
 
             {/* Left Side */}
             <div className="hidden lg:block lg:col-span-3 bg-blue-950 text-white p-10">
-              <h2 className="text-3xl font-bold mb-4 font-garamond">Welcome Back to Delta Neutral</h2>
+              <h2 className="text-3xl font-bold mb-4 font-garamond">Welcome Back to Rosnept</h2>
               <p className="text-sm mb-6 text-gray-300 font-barlow">
                 Your gateway to sustainable and smart investments. Please log in to access your account.
               </p>
@@ -173,7 +173,7 @@ export default function LoginPage() {
                 </p>
 
                 <p className="text-xs text-center text-gray-500 mt-6">
-                  &copy; {new Date().getFullYear()} Delta Neutral. All rights reserved.
+                  &copy; {new Date().getFullYear()} Rosnept. All rights reserved.
                 </p>
               </div>
             </div>

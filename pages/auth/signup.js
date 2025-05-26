@@ -118,7 +118,7 @@ export default function SignupPage() {
   return (
     <>
       <Head>
-        <title>Sign Up | Delta Neutral</title>
+        <title>Sign Up | Rosnept</title>
       </Head>
 
       <div className="relative w-full min-h-screen bg-cover bg-center" style={{ backgroundImage: `url('/cta.jpg')` }}>
@@ -129,7 +129,7 @@ export default function SignupPage() {
 
             {/* Left Side */}
             <div className="hidden lg:block lg:col-span-3 bg-blue-950 text-white p-10">
-              <h2 className="text-3xl font-bold mb-4 font-garamond">Join Delta Neutral</h2>
+              <h2 className="text-3xl font-bold mb-4 font-garamond">Join Rosnept</h2>
               <p className="text-sm mb-6 text-gray-300 font-barlow">
                 Start your journey to smart, sustainable investing. Sign up to create your account.
               </p>
@@ -221,7 +221,7 @@ export default function SignupPage() {
                 </p>
 
                 <p className="text-xs text-center text-gray-500 mt-6">
-                  &copy; {new Date().getFullYear()} Delta Neutral. All rights reserved.
+                  &copy; {new Date().getFullYear()} Rosnept. All rights reserved.
                 </p>
               </div>
             </div>

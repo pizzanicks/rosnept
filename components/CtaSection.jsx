@@ -23,7 +23,7 @@ export default function CtaSection() {
             Invest Smarter. Grow Sustainably.
           </h2>
           <p className="mt-4 text-sm lg:text-lg font-barlow">
-            Join Delta Neutral and take the first step toward building long-term wealth through balanced strategies in crypto, clean energy, agriculture, and gold. Your future deserves a smarter investment plan.
+            Join Rosnept and take the first step toward building long-term wealth through balanced strategies in crypto, clean energy, agriculture, and gold. Your future deserves a smarter investment plan.
           </p>
           <Link href="/auth/signup" passHref legacyBehavior>
             <motion.div

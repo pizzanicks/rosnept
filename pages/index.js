@@ -32,8 +32,8 @@ function Index() {
   return (
     <>
       <Head>
-        <title>Delta Neutral | Sustainable Crypto & Energy Investments</title>
-        <meta name="description" content="Delta Neutral combines crypto strategies with sustainable energy investments. Generate consistent returns while supporting a greener future." />
+        <title>Rosnept | Sustainable Crypto & Energy Investments</title>
+        <meta name="description" content="Rosnept combines crypto strategies with sustainable energy investments. Generate consistent returns while supporting a greener future." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 

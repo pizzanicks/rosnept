@@ -7,10 +7,10 @@ function Index() {
   return (
     <>
       <Head>
-        <title>Blog | Delta Neutral</title>
+        <title>Blog | Rosnept</title>
         <meta
           name="description"
-          content="Stay updated with the latest insights, news, and expert analysis on cryptocurrency, sustainable energy investments, and more at Delta Neutral."
+          content="Stay updated with the latest insights, news, and expert analysis on cryptocurrency, sustainable energy investments, and more at Rosnept."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>

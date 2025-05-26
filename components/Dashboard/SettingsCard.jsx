@@ -626,7 +626,7 @@ export default function SettingsPreview() {
 
                         {paymentMethod === 'bank' && (
                             <p className="text-xs text-gray-500 mt-6 italic">
-                                Please ensure that the bank account you provide matches the name on your Delta Neutral profile to avoid any issues.
+                                Please ensure that the bank account you provide matches the name on your Rosnept profile to avoid any issues.
                             </p>
                         )}
 

@@ -25,10 +25,10 @@ function Plans() {
   return (
     <>
         <Head>
-          <title>Investment Plans | Delta Neutral</title>
+          <title>Investment Plans | Rosnept</title>
           <meta
             name="description"
-            content="Explore Delta Neutral’s curated investment plans designed for stability, growth, and impact—across cryptocurrency, clean energy, agriculture, and gold."
+            content="Explore Rosnept’s curated investment plans designed for stability, growth, and impact—across cryptocurrency, clean energy, agriculture, and gold."
           />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
@@ -36,7 +36,7 @@ function Plans() {
         <HeroBanner
             image="/pl-1.jpg"
             title="Our Investment Plans"
-            description="Explore Delta Neutral’s curated investment plans designed for stability, growth, and impact—across cryptocurrency, clean energy, agriculture, and gold. Choose the plan that aligns with your goals."
+            description="Explore Rosnept’s curated investment plans designed for stability, growth, and impact—across cryptocurrency, clean energy, agriculture, and gold. Choose the plan that aligns with your goals."
         />
         <PlansSection />
         <Footer />

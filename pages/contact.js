@@ -25,10 +25,10 @@ function Contact() {
   return (
     <>
         <Head>
-            <title>Contact Us | Delta Neutral</title>
+            <title>Contact Us | Rosnept</title>
             <meta
             name="description"
-            content="Have questions or ready to invest? Contact Delta Neutral to explore innovative and sustainable investment opportunities today."
+            content="Have questions or ready to invest? Contact Rosnept to explore innovative and sustainable investment opportunities today."
             />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
@@ -36,7 +36,7 @@ function Contact() {
         <HeroBanner
             image="/rev-1.png"
             title="Contact Us"
-            description="Have questions or ready to invest? Delta Neutral’s team is here to help you navigate sustainable investment opportunities. Reach out today and let’s grow your future together."
+            description="Have questions or ready to invest? Rosnept’s team is here to help you navigate sustainable investment opportunities. Reach out today and let’s grow your future together."
         />
         <ContactSection />
         <Footer />

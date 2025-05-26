@@ -29,7 +29,7 @@ export default function AssetPortfolio() {
       <div className="max-w-7xl mx-auto">
         <p className="text-sm uppercase text-gray-500 mb-2">Our Portfolio</p>
         <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-10 font-garamond">
-          Delta Neutral Asset Streams
+          Rosnept Asset Streams
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">

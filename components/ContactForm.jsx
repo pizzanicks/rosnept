@@ -73,7 +73,7 @@ export default function ContactSection() {
             <div>
                 <p className="text-gray-700 text-sm md:text-base leading-relaxed font-barlow">
                     Our vision is to make secure, innovative investment opportunities accessible to everyone, regardless of location. 
-                    At Delta Neutral, we believe that empowering individuals with smart, sustainable investment options can create 
+                    At Rosnept, we believe that empowering individuals with smart, sustainable investment options can create 
                     a more equitable and financially independent global community.
                 </p>
             </div>
