@@ -4,6 +4,7 @@ import { FaBitcoin, FaDollarSign, FaCheckCircle } from "react-icons/fa";
 import Image from "next/image";
 import { useFirebase } from "@/lib/firebaseContext";
 import Notification from "../Notification/notification";
+import { FiCopy, FiCheck } from "react-icons/fi";
 
 const DepositSlides = () => {
   const [step, setStep] = useState("input");
@@ -16,6 +17,9 @@ const DepositSlides = () => {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState('success');
   const [notificationMessage, setNotificationMessage] = useState('N/a');
+  const [copied, setCopied] = useState(false);
+  const [walletAddress, setWalletAddress] = useState("brr45rt62dwe73uevbk387gueioi");
+  const [qrCodeImg, setQrCodeImg] = useState("/qr.png");
 
 
   // Fetch BTC rate
@@ -59,6 +63,19 @@ const DepositSlides = () => {
 
 
   const sendDepositReq = async () => {
+
+    // console.log("currency:", crypto);
+
+    if (crypto === "BTC") {
+      setWalletAddress("bc1qksrwkpkg3x0tzcupwf7hmdks5746wtcgq7a0z6");
+      setQrCodeImg("/qr.png");
+    }
+
+    if (crypto === "USDT") {
+      setWalletAddress("TSDfmNFRpw6TMwJz6icpEfRY53cvRLJEht");
+      setQrCodeImg("/qr.png");
+    }
+    
     setLoading(true);
 
     if (!(amount > 0)) {
@@ -79,7 +96,7 @@ const DepositSlides = () => {
       const response = await fetch('/api/sendDepositReq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, crypto, userId, name: userData?.fullName }),
+        body: JSON.stringify({ amount, crypto, userId, name: userData?.fullName, email: userData?.email }),
       });
   
       if (response.ok) {
@@ -107,6 +124,12 @@ const DepositSlides = () => {
   const formattedTime = `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, "0")}`;
   const convertedAmount = crypto === "BTC" && btcRate ? (amount / btcRate).toFixed(8) : amount;
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(walletAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
+  };
+
   return (
     <div className="relative w-full min-h-[calc(75vh-0.2rem)] lg:min-h-[calc(80vh-1rem)] bg-gray-100 p-2 lg:p-4 flex items-start lg:items-center justify-center">
       <AnimatePresence mode="wait">
@@ -119,14 +142,18 @@ const DepositSlides = () => {
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
             className="bg-white w-full max-w-md rounded-lg p-6 shadow-md"
           >
-            <h2 className="text-lg lg:text-xl font-medium text-blue-800 mb-2">Deposit Funds</h2>
-            <p className="text-sm text-gray-600 mb-4">Enter an amount and select a crypto method below:</p>
+            <h2 className="text-lg lg:text-xl font-medium text-blue-800 mb-2">
+              Deposit Funds
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Enter an amount and select a crypto method below:
+            </p>
 
             <input
               type="number"
               className="w-full border border-gray-300 p-2 rounded mb-4"
               placeholder="Enter amount in USD"
-            //   value={amount}
+              //   value={amount}
               onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
             />
 
@@ -136,14 +163,18 @@ const DepositSlides = () => {
                   key={option.value}
                   onClick={() => setCrypto(option.value)}
                   className={`relative border rounded-md p-3 flex items-center justify-between cursor-pointer transition-all duration-200 ${
-                    crypto === option.value ? "border-blue-600" : "border-gray-300"
+                    crypto === option.value
+                      ? "border-blue-600"
+                      : "border-gray-300"
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     {option.icon}
                     <span className="text-sm font-medium">{option.label}</span>
                   </div>
-                  {crypto === option.value && <FaCheckCircle className="text-blue-600" />}
+                  {crypto === option.value && (
+                    <FaCheckCircle className="text-blue-600" />
+                  )}
                 </div>
               ))}
             </div>
@@ -167,23 +198,45 @@ const DepositSlides = () => {
             className="bg-white w-full max-w-md rounded-lg p-6 shadow-md text-center"
           >
             <h2 className="text-sm lg:text-base font-semibold text-blue-800 mb-4">
-              Send exactly {convertedAmount.toLocaleString()} {crypto} to the wallet below:
+              Send exactly {convertedAmount.toLocaleString()} {crypto} to the
+              wallet below:
             </h2>
 
-            <Image src="/qr.png" alt="QR Code" width={400} height={400} className="w-40 h-40 mx-auto mb-4 border p-2" />
+            <Image
+              src={qrCodeImg}
+              alt="QR Code"
+              width={400}
+              height={400}
+              className="w-40 h-40 mx-auto mb-4 border p-2"
+            />
 
             <div className="text-left text-sm divide-y border-gray-200 py-2 space-y-2">
-              <div className="flex justify-between py-2">
+              <div className="flex justify-between items-center py-2">
                 <span className="font-medium">Wallet:</span>
-                <span className="text-gray-600">bc1qksrwkpkg3x0tzcupwf7hmdks5746wtcgq7a0z6</span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-gray-600">{walletAddress}</span>
+                  {copied ? (
+                    <FiCheck className="text-green-500" title="Copied!" />
+                  ) : (
+                    <FiCopy
+                      className="cursor-pointer text-gray-500 hover:text-gray-700"
+                      onClick={handleCopy}
+                      title="Copy to clipboard"
+                    />
+                  )}
+                </div>
               </div>
               <div className="flex justify-between py-2">
                 <span className="font-medium">Amount:</span>
-                <span className="text-gray-600">{convertedAmount.toLocaleString()} {crypto}</span>
+                <span className="text-gray-600">
+                  {convertedAmount.toLocaleString()} {crypto}
+                </span>
               </div>
               <div className="flex justify-between py-2">
                 <span className="font-medium">Time Left:</span>
-                <span className="text-red-500 font-semibold">{formattedTime}</span>
+                <span className="text-red-500 font-semibold">
+                  {formattedTime}
+                </span>
               </div>
             </div>
           </motion.div>
@@ -197,24 +250,26 @@ const DepositSlides = () => {
             exit={{ x: "-100%" }}
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
             className="bg-white w-full max-w-md rounded-lg p-6 shadow-md text-center"
-            >
+          >
             <div className="flex justify-center mb-4">
-                <FaCheckCircle className="text-green-500 text-4xl" />
+              <FaCheckCircle className="text-green-500 text-4xl" />
             </div>
-            <h2 className="text-lg font-semibold text-blue-800 mb-3">Countdown Complete</h2>
+            <h2 className="text-lg font-semibold text-blue-800 mb-3">
+              Countdown Complete
+            </h2>
             <p className="text-sm text-gray-700">
-                If you have made the payment, please do not panic. Your transaction will be automatically confirmed and
-                credited to your dashboard wallet shortly.
+              If you have made the payment, please do not panic. Your
+              transaction will be automatically confirmed and credited to your
+              dashboard wallet shortly.
             </p>
-            </motion.div>
+          </motion.div>
         )}
 
         {loading && (
-         <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-50">
-          <div className="w-8 lg:w-12 h-8 lg:h-12 rounded-full animate-spin border-4 border-t-transparent border-l-transparent border-r-blue-500 border-b-purple-500 shadow-lg"></div>
-        </div>
+          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-50">
+            <div className="w-8 lg:w-12 h-8 lg:h-12 rounded-full animate-spin border-4 border-t-transparent border-l-transparent border-r-blue-500 border-b-purple-500 shadow-lg"></div>
+          </div>
         )}
-
       </AnimatePresence>
 
       {showNotification && (
@@ -225,7 +280,6 @@ const DepositSlides = () => {
           show={true}
         />
       )}
-
     </div>
   );
 };
