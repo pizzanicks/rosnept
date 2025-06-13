@@ -87,8 +87,8 @@ export default function SupportPage() {
         </p>
         <p className="text-sm text-gray-800">
           <strong>Email:</strong>{' '}
-          <a href="mailto:support@example.com" className="text-blue-600 hover:underline">
-            support@example.com
+          <a href="mailto:support@rosnep.com" className="text-blue-600 hover:underline">
+            support@rosnep.com
           </a>
         </p>
       </motion.div>
