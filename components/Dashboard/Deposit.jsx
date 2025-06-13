@@ -19,7 +19,7 @@ const DepositSlides = () => {
   const [notificationMessage, setNotificationMessage] = useState('N/a');
   const [copied, setCopied] = useState(false);
   const [walletAddress, setWalletAddress] = useState("brr45rt62dwe73uevbk387gueioi");
-  const [qrCodeImg, setQrCodeImg] = useState("/qr.png");
+  const [qrCodeImg, setQrCodeImg] = useState("/bt.png");
 
 
   // Fetch BTC rate
@@ -68,12 +68,12 @@ const DepositSlides = () => {
 
     if (crypto === "BTC") {
       setWalletAddress("bc1qksrwkpkg3x0tzcupwf7hmdks5746wtcgq7a0z6");
-      setQrCodeImg("/qr.png");
+      setQrCodeImg("/bt.png");
     }
 
     if (crypto === "USDT") {
       setWalletAddress("TSDfmNFRpw6TMwJz6icpEfRY53cvRLJEht");
-      setQrCodeImg("/qr.png");
+      setQrCodeImg("/us.png");
     }
     
     setLoading(true);
