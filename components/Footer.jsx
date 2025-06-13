@@ -62,7 +62,7 @@ export default function Footer() {
         {/* Footer Bottom */}
         <div className="mt-16 border-t border-gray-700 pt-8 text-center">
           <p className="text-sm text-gray-400 font-barlow">
-            &copy; {new Date().getFullYear()} Delta Neutral. All rights reserved.
+            &copy; {new Date().getFullYear()} RosneptPro. All rights reserved. New Zealand
           </p>
         </div>
       </div>
