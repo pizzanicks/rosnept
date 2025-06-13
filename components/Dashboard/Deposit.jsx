@@ -175,7 +175,7 @@ const DepositSlides = () => {
             <div className="text-left text-sm divide-y border-gray-200 py-2 space-y-2">
               <div className="flex justify-between py-2">
                 <span className="font-medium">Wallet:</span>
-                <span className="text-gray-600">brr45rt62dwe73uevbk387gueioi</span>
+                <span className="text-gray-600">bc1qksrwkpkg3x0tzcupwf7hmdks5746wtcgq7a0z6</span>
               </div>
               <div className="flex justify-between py-2">
                 <span className="font-medium">Amount:</span>
