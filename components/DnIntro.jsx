@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 
-export default function DeltaNeutralIntro() {
+export default function RosneplIntro() {
   return (
     <section className="w-full bg-white py-16 px-6">
       <div className="max-w-7xl mx-auto flex flex-col-reverse md:flex-row items-center gap-10">

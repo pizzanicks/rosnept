@@ -1,7 +1,7 @@
 import Navbar from '@/components/Navbar'
 import React, { useState, useEffect } from 'react'
 import HeroBanner from '@/components/HeroBanner'
-import DeltaNeutralIntro from '@/components/DnIntro'
+import RosneplIntro from '@/components/DnIntro'
 import TopCryptos from '@/components/CryptoPrice'
 import QuoteSection from '@/components/QuoteSection'
 import StatsSection from '@/components/Statistics'
@@ -39,7 +39,7 @@ function About() {
             title="Who We Are"
             description="Rosnept combines innovation and sustainability to deliver smarter investment strategies in cryptocurrency, energy, agriculture, and gold."
         />
-        <DeltaNeutralIntro />
+        <RosneplIntro />
         <TopCryptos />
         <QuoteSection />
         <StatsSection />
