@@ -85,7 +85,7 @@ export default function ContactSection() {
             </div>
             <div>
                 <h4 className="text-base md:text-lg font-medium">Email</h4>
-                <p className='text-sm md:text-base font-barlow'>support@deltaneutral.io</p>
+                <p className='text-sm md:text-base font-barlow'>support@Rosnepl.io</p>
             </div>
         </motion.div>
       </div>

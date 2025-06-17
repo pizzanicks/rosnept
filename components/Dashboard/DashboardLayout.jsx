@@ -206,7 +206,7 @@ const DashboardLayout = ({ children }) => {
 
           {/* Bottom Support Email */}
           <div className="border-t border-blue-900 pt-2 lg:pt-4 mt-auto text-sm text-center text-blue-300">
-              support@deltaneutral.org
+              support@Rosnepl.org
             </div>
          </motion.aside>
          

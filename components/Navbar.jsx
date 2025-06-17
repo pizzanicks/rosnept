@@ -86,7 +86,7 @@ export default function Navbar() {
 
             {/* Support Email */}
             <div className="pt-6 mt-6 border-t border-white/20 text-xs text-center">
-              <span className="text-white/70">support@deltaneutral.org</span>
+              <span className="text-white/70">support@Rosnepl.org</span>
             </div>
           </motion.div>
         </>

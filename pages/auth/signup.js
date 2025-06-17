@@ -136,8 +136,8 @@ export default function SignupPage() {
 
               <div className="mt-auto pt-10 text-sm font-barlow">
                 <p className="text-gray-400">Need help?</p>
-                <Link href="mailto:support@deltaneutral.com" className="text-blue-300 hover:text-white">
-                  support@deltaneutral.com
+                <Link href="mailto:support@Rosnepl.com" className="text-blue-300 hover:text-white">
+                  support@Rosnepl.com
                 </Link>
               </div>
             </div>
