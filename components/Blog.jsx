@@ -18,10 +18,10 @@ const blogs = [
         image: "/blg-2.jpg",
         date: { day: 15, month: "AUG" },
         author: "Olivia Matthews",
-        title: "Understanding Delta-Neutral Strategies in Crypto Investments",
+        title: "Understanding rosnep-Neutral Strategies in Crypto Investments",
         content:
-          "Delve into the concept of delta-neutral strategies in the crypto market. Learn how this strategy helps mitigate risks and maintain steady returns in volatile markets.",
-        slug: "/blog/delta-neutral-crypto-strategies",
+          "Delve into the concept of rosnep-neutral strategies in the crypto market. Learn how this strategy helps mitigate risks and maintain steady returns in volatile markets.",
+        slug: "/blog/rosnep-neutral-crypto-strategies",
     },
     {
         id: 3,

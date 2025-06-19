@@ -40,7 +40,7 @@ export default function WhyInvestSection() {
         {/* Section Titles */}
         <p className="text-sm uppercase text-gray-500 mb-2">Why Invest With Us</p>
         <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-10 font-garamond">
-          The Delta Advantage
+          The rosnep Advantage
         </h2>
 
         {/* Cards */}
