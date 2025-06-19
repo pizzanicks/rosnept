@@ -1,3 +1,4 @@
+// pages/api/activatePlan.js
 import db from '@/lib/firebase';
 import { runTransaction, serverTimestamp, doc } from 'firebase/firestore';
 
@@ -32,8 +33,20 @@ export default async function handler(req, res) {
         throw new Error('Insufficient balance');
       }
 
+      // ✅ MAIN STRUCTURED PLAN OBJECT
+      const activePlan = {
+        planName: selectedPlan.plan,
+        amount: amount,
+        roiPercent: 0.04, // 4% daily
+        startDate: serverTimestamp(), // now
+        endDate: null,                // we'll set this during 7-day ROI logic
+        nextPayoutDate: null,        // will be updated each day
+        isActive: true,
+        daysCompleted: 0,
+      };
+
       transaction.update(investmentRef, {
-        activePlan: selectedPlan.plan,
+        activePlan: activePlan,
         activatedOn: serverTimestamp(),
         hasActivePlan: true,
         walletBal: currentData.walletBal - amount,
