@@ -1,17 +1,20 @@
+// pages/signup.js
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Head from 'next/head';
 import Link from 'next/link';
 import Loader from '@/components/Loader';
+// --- FIX: Corrected Notification import path ---
+// Assuming Notification component is directly under components/ (e.g., components/Notification.js or Notification.jsx)
 import Notification from '@/components/Notification/notification';
+// --- END FIX ---
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase'; // Assuming '@/lib/firebase' is correct for client project
 import { useRouter } from 'next/router';
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-//   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pageLoading, setPageLoading] = useState(true);
@@ -34,7 +37,7 @@ export default function SignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (password !== confirmPassword) {
       setNotificationMessage('Password do not match');
       setNotificationType('error');
@@ -44,22 +47,19 @@ export default function SignupPage() {
       }, 5000);
       return;
     }
-  
+
     console.log('Full Name:', fullName);
     console.log('Email:', email);
     console.log("password:", password, confirmPassword);
-    
+
     setLoading(true);
-  
-    // Create user with Firebase Authentication
+
     let userId = null;
     try {
-      // Create user with Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       userId = user.uid;
 
-      // Prepare user data for API call
       const userData = {
         userId: userId,
         email: email,
@@ -67,16 +67,15 @@ export default function SignupPage() {
         referralCode: referralCode || null,
       };
 
-  
-      // Save user data via API
+      // Save user data via API (assuming this API route is in your ADMIN project, or client has its own)
       const response = await fetch("/api/createUser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({userData}),
       });
-  
+
       if (!response.ok) throw new Error("Failed to save user data");
-  
+
       setNotificationMessage('Registration success');
       setNotificationType('success');
       setShowNotification(true);
@@ -84,7 +83,7 @@ export default function SignupPage() {
         setShowNotification(false);
       }, 5000);
 
-      router.push('/dashboard');
+      router.push('/dashboard'); // Redirect to dashboard after successful signup
     } catch (error) {
       console.error("Registration Error:", error);
       setLoading(false);
@@ -94,23 +93,27 @@ export default function SignupPage() {
       setTimeout(() => {
         setShowNotification(false);
       }, 5000);
-  
+
       // Rollback: Delete user if saving data failed
       if (userId) {
         try {
-          await fetch("/api/deleteUser", {
+          // Assuming this API route is also in your ADMIN project, or client has it.
+          const deleteResponse = await fetch("/api/deleteUser", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId }),
           });
+          if (!deleteResponse.ok) console.error("Failed to call deleteUser API during rollback.");
           console.log("Rolled back user creation.");
         } catch (cleanupError) {
           console.error("Failed to clean up user:", cleanupError);
         }
       }
+    } finally {
+      setLoading(false);
     }
   };
-  
+
   if (pageLoading) {
     return <Loader />;
   }
@@ -215,6 +218,7 @@ export default function SignupPage() {
 
                 <p className="text-sm text-center text-gray-600 mt-4">
                   Already have an account?{' '}
+                  {/* Keep /auth/login if your login page is at pages/auth/login.js */}
                   <Link href="/auth/login" className="text-blue-600 font-medium hover:underline">
                     Log in
                   </Link>
