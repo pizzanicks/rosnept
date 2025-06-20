@@ -6,7 +6,7 @@ import Footer from '@/components/Footer'
 import Loader from '@/components/Loader'
 import Head from 'next/head'
 import { collection, onSnapshot } from 'firebase/firestore';
-import db from '@/lib/firebase';
+import db from '@/lib/firebase'; // <--- VERIFY THIS PATH ON YOUR CLIENT PROJECT'S FILE SYSTEM
 import { useRouter } from 'next/router';
 
 function PlansPage() {
@@ -19,10 +19,11 @@ function PlansPage() {
             setPageLoading(false);
         }, 1000);
 
-        const unsubscribe = onSnapshot(collection(db, 'plans'), (snapshot) => {
+        // --- CRITICAL FIX: Changed collection name from 'plans' to 'MANAGE_PLAN' ---
+        const unsubscribe = onSnapshot(collection(db, 'MANAGE_PLAN'), (snapshot) => {
             const fetchedPlans = snapshot.docs
                 .map(doc => ({ id: doc.id, ...doc.data() }))
-                .filter(plan => plan.enabled);
+                .filter(plan => plan.enabled); // Only show plans that are marked as 'enabled'
             setPlans(fetchedPlans);
         });
 
@@ -48,7 +49,7 @@ function PlansPage() {
             </Head>
             <Navbar />
             <HeroBanner
-                image="/rev-1.png"
+                image="/rev-1.png" // Ensure this image path is correct in your client project's public folder
                 title="Investment Plans"
                 description="Explore our flexible and rewarding investment plans tailored for your financial growth."
             />
@@ -66,6 +67,7 @@ function PlansPage() {
                                     <p className="text-lg font-bold text-gray-800 mb-1">{plan.price}</p>
                                     <p className="text-green-600 font-semibold mb-3">{plan.roi}</p>
                                     <ul className="list-disc list-inside text-sm text-gray-700 mb-4">
+                                        {/* Ensure 'highlights' is an array, even if empty */}
                                         {plan.highlights?.map((item, i) => (
                                             <li key={i}>{item}</li>
                                         ))}
@@ -75,7 +77,7 @@ function PlansPage() {
                                     className={`${plan.buttonStyle || 'bg-blue-600'} text-white py-2 mt-auto rounded hover:opacity-90 transition`}
                                     onClick={() => router.push('/signup')}
                                 >
-                                    Get Started
+                                    {plan.cta || 'Get Started'} {/* Use dynamic CTA, fallback to default */}
                                 </button>
                             </div>
                         ))}
