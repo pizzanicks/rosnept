@@ -3,26 +3,28 @@ import React, { useState, useEffect } from 'react';
 import { FiCreditCard, FiInfo, FiArrowRight, FiCheckCircle, FiAlertTriangle } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { collection, onSnapshot } from 'firebase/firestore';
-import db from '@/lib/firebase'; // <--- VERIFY THIS PATH ON YOUR CLIENT PROJECT'S FILE SYSTEM
+import db from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFirebase } from '@/lib/firebaseContext';
-import Notification from '../Notification/notification'; // <--- VERIFY THIS PATH ON YOUR CLIENT PROJECT'S FILE SYSTEM
+import Notification from '../Notification/notification';
 import { useRouter } from 'next/router';
 
 const PlanPurchase = () => {
   const [plans, setPlans] = useState([]);
-  const [step, setStep] = useState(1);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [amount, setAmount] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [startInvestment, setStartInvestment] = useState(false);
   const [amountError, setAmountError] = useState("");
   const { userInvestment } = useFirebase();
   const [activating, setActivating] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
-  const [notificationType, setNotificationType] = useState('success');
-  const [notificationMessage, setNotificationMessage] = useState('N/a');
+  const [notificationType, setNotificationType] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
   const router = useRouter();
+
+  // --- NEW STATE: Controls whether we show the list of plans or single plan details ---
+  const [isViewingSinglePlanDetails, setIsViewingSinglePlanDetails] = useState(false);
+
 
   useEffect(() => {
     // --- CRITICAL FIX: Changed collection name from 'plans' to 'MANAGE_PLAN' ---
@@ -43,49 +45,96 @@ const PlanPurchase = () => {
     transition: { type: "spring", stiffness: 300, damping: 30 },
   };
 
+  // --- MODIFIED: handleInvestNow now sets state to view single plan details ---
+  const handleInvestNow = (plan) => {
+    setSelectedPlan(plan);
+    setAmount(''); // Clear previous amount
+    setAmountError(''); // Clear any previous errors
+    setIsViewingSinglePlanDetails(true); // Show the single plan detail view
+  };
+
+  // --- NEW: Function to go back to the list of plans ---
+  const handleBackToPlans = () => {
+    setSelectedPlan(null);
+    setAmount('');
+    setAmountError('');
+    setIsViewingSinglePlanDetails(false); // Go back to showing all plans
+  };
+
+  // --- MODIFIED: handleContinue logic to include deposit redirection ---
   const handleContinue = () => {
-    const minimumAmount = selectedPlan 
-      ? parseFloat(selectedPlan.highlights.find(h => h.includes('Minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) 
-      : 0;
+    if (!selectedPlan) return; // Should not happen if flow is correct
+
+    const minimumAmount = parseFloat(selectedPlan.highlights.find(h => h.includes('Minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) || 0;
+    const maximumAmount = parseFloat(selectedPlan.highlights.find(h => h.includes('Maximum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) || Infinity;
 
     const parsedAmount = parseFloat(amount);
 
-    if (isNaN(parsedAmount) || parsedAmount < minimumAmount || parsedAmount > userInvestment?.walletBal) {
-      setAmountError(
-        `Amount must be at least ${minimumAmount.toLocaleString()} USDT and not greater than ${
-          typeof userInvestment?.walletBal === 'number'
-            ? userInvestment.walletBal.toLocaleString()
-            : 'N/A'
-        } USDT`
-      );
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      setAmountError("Please enter a valid amount.");
       return;
     }
 
-    setAmountError("");
-    setStep(2);
-  };
+    if (parsedAmount < minimumAmount) {
+      setAmountError(`Amount must be at least ${minimumAmount.toLocaleString()} USDT.`);
+      return;
+    }
+    
+    // Check if wallet balance is sufficient
+    if (parsedAmount > userInvestment?.walletBal) {
+      setNotificationType('error');
+      setNotificationMessage('Insufficient wallet balance. Please deposit funds to proceed.');
+      setShowNotification(true);
+      // We don't return here immediately, instead, allow user to click deposit
+      // The button for deposit will be rendered based on this notification.
+      return; // Stop the investment process for now, show notification.
+    }
 
-  const handleInvestNow = (plan) => {
-    setSelectedPlan(plan);
-    setStartInvestment(true);
-    setStep(1);
+    if (parsedAmount > maximumAmount) {
+      setAmountError(`Amount must not exceed ${maximumAmount.toLocaleString()} USDT.`);
+      return;
+    }
+
+    setAmountError(""); // Clear any previous errors
+    // If validation passes and balance is sufficient, then proceed to activate.
+    // In your original code, this was `setStep(2)`. Given the simpler flow,
+    // we can directly call activatePlan from here or make the "Confirm Investment" button visible.
+    // For now, let's keep it simple and assume a confirmation step is implicitly handled by the activatePlan button.
+    activatePlan(); // Directly activate if all checks pass
   };
 
   const activatePlan = async () => {
+    if (!selectedPlan || !amount || parseFloat(amount) <= 0) {
+      setNotificationType('error');
+      setNotificationMessage('Please select a plan and enter a valid amount.');
+      setShowNotification(true);
+      return;
+    }
+
+    const parsedAmount = parseFloat(amount);
+
     setActivating(true);
     try {
-      const response = await fetch('/api/activatePlan', {
+      // Simulate API call to activate plan
+      const response = await fetch('/api/activatePlan', { // Ensure this API route exists
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userInvestment, selectedPlan, amount }),
+        body: JSON.stringify({ userId: userInvestment?.id, selectedPlan, amount: parsedAmount }),
       });
 
-      if (!response.ok) throw new Error('Failed to activate plan');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error activating plan.' }));
+        throw new Error(errorData.message || 'Failed to activate plan');
+      }
 
-      await response.json();
-      setShowModal(true);
+      await response.json(); // Process response if needed
+      setShowModal(true); // Show success modal
+      setIsViewingSinglePlanDetails(false); // Go back to plan list after activation
+      setAmount(''); // Clear amount
+      setSelectedPlan(null); // Clear selected plan
     } catch (error) {
-      setNotificationMessage('An error occurred while activating plan.');
+      console.error("Error activating plan:", error);
+      setNotificationMessage(`An error occurred while activating plan: ${error.message}`);
       setNotificationType('error');
       setShowNotification(true);
     } finally {
@@ -98,7 +147,7 @@ const PlanPurchase = () => {
 
   const closeSuccessModal = () => {
     setShowModal(false);
-    router.push('/dashboard');
+    router.push('/dashboard'); // Or push to a specific investment history page
   };
 
   return (
@@ -110,7 +159,7 @@ const PlanPurchase = () => {
         </div>
       </div>
 
-      {/* ✅ Show Active Plan if exists */}
+      {/* Show Active Plan if exists */}
       {userInvestment?.activePlan?.isActive && (
         <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-8">
           <h3 className="text-lg font-semibold text-blue-900 mb-2">Your Active Plan</h3>
@@ -121,6 +170,7 @@ const PlanPurchase = () => {
           {userInvestment.activePlan.daysCompleted >= 7 && (
             <button
               className="mt-3 bg-green-600 text-white py-2 px-4 rounded"
+              // Consider if this should reactivate the current plan or guide to new investment
               onClick={() => handleInvestNow(plans.find(p => p.plan === userInvestment.activePlan.planName))}
             >
               Restart Investment Cycle
@@ -129,7 +179,120 @@ const PlanPurchase = () => {
         </div>
       )}
 
-      {!startInvestment && (
+      {/* --- Conditional Rendering for All Plans vs. Single Plan Details --- */}
+      {isViewingSinglePlanDetails && selectedPlan ? (
+        // --- Single Plan Details and Investment Input ---
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+          className="bg-white rounded-lg shadow-lg p-6 space-y-4"
+        >
+          <button onClick={handleBackToPlans} className="text-blue-600 hover:underline mb-4 text-sm">← Back to all plans</button>
+
+          <h3 className="text-xl lg:text-2xl font-bold text-blue-900">{selectedPlan.plan}</h3>
+          <p className="text-sm lg:text-base text-gray-600">{selectedPlan.subTitle}</p>
+          <p className="text-gray-700 mt-2">{selectedPlan.description}</p>
+
+          <div className="border-t border-gray-300 my-4" />
+
+          <div className="flex justify-between items-center text-sm lg:text-base">
+            <div>
+              <div className="font-bold">{selectedPlan.roi}</div>
+              <div className="text-gray-500">Weekly ROI</div>
+            </div>
+            <div>
+              <span className="font-bold">
+                {selectedPlan.highlights.find(h => h.includes('Duration'))?.split(': ')[1]}
+              </span>
+              <div className="text-gray-500">Duration</div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-300 my-4" />
+
+          <ul className="space-y-2">
+            {selectedPlan.highlights?.map((highlight, index) => {
+              const [label, value] = highlight.split(': ');
+              return (
+                <li key={index} className="flex justify-between text-sm text-gray-600">
+                  <span>{label}</span>
+                  <span>-</span>
+                  <span>{value}</span>
+                </li>
+              );
+            })}
+            {selectedPlan.points?.map((point, index) => (
+              point.enabled && (
+                <li key={`point-${index}`} className="flex items-center text-sm text-gray-600">
+                  <FiCheckCircle className="text-green-500 mr-2" />
+                  <span>{point.text}</span>
+                </li>
+              )
+            ))}
+          </ul>
+
+          <div className="border-t border-gray-300 my-4" />
+
+          {/* Amount Input Section */}
+          <div className="space-y-3">
+            <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+              Enter Investment Amount (USDT)
+            </label>
+            <input
+              type="number"
+              id="amount"
+              value={amount}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setAmountError(""); // Clear error on typing
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              placeholder={`Min: ${parseFloat(selectedPlan.highlights.find(h => h.includes('Minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) || 0} USDT`}
+              min={parseFloat(selectedPlan.highlights.find(h => h.includes('Minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, ""))}
+              disabled={activating}
+            />
+            {amountError && <p className="text-red-500 text-xs mt-1">{amountError}</p>}
+            
+            {/* Wallet Balance Display */}
+            <p className="text-sm text-gray-600">
+              Your Wallet Balance:{" "}
+              <span className="font-semibold text-blue-800">
+                {userInvestment?.walletBal?.toLocaleString() || "0"} USDT
+              </span>
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex space-x-4 mt-6">
+                <button
+                    onClick={handleContinue} // This now directly tries to activate or show error/deposit
+                    className={`flex-1 py-3 px-4 rounded-md font-medium text-white transition ${activating ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                    disabled={activating}
+                >
+                    {activating ? (
+                        <div className="flex items-center justify-center">
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Activating...
+                        </div>
+                    ) : (
+                        "Confirm Investment"
+                    )}
+                </button>
+            </div>
+            {/* Conditional Deposit Button if balance is insufficient and notification is shown */}
+            {showNotification && notificationType === 'error' && notificationMessage.includes('Insufficient') && (
+                <button
+                    onClick={() => router.push('/dashboard/deposit')} // Adjust this path to your actual deposit page
+                    className="mt-4 w-full py-3 px-4 rounded-md font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 transition"
+                >
+                    Go to Deposit Page
+                </button>
+            )}
+          </div>
+        </motion.div>
+      ) : (
+        // --- Grid of All Investment Plans ---
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map(plan => (
             <div key={plan.id} className="bg-white rounded shadow-lg p-6">
@@ -150,7 +313,6 @@ const PlanPurchase = () => {
               </div>
               <div className="border-t border-gray-300 mt-2 mb-4 lg:mt-6 lg:mb-6" />
               <ul className="space-y-2">
-                {/* Ensure 'highlights' is an array before mapping */}
                 {plan.highlights?.map((highlight, index) => {
                   const [label, value] = highlight.split(': ');
                   return (
@@ -178,7 +340,7 @@ const PlanPurchase = () => {
           type={notificationType}
           message={notificationMessage}
           onClose={() => setShowNotification(false)}
-          show={true}
+          show={showNotification}
         />
       )}
 
