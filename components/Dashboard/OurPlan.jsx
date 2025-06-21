@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { FiCreditCard, FiInfo, FiArrowRight, FiCheckCircle, FiAlertTriangle } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { collection, onSnapshot } from 'firebase/firestore';
-import db from '@/lib/firebase';
+import db from '@/lib/firebase'; // <--- VERIFY THIS PATH ON YOUR CLIENT PROJECT'S FILE SYSTEM
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFirebase } from '@/lib/firebaseContext';
-import Notification from '../Notification/notification';
+import Notification from '../Notification/notification'; // <--- VERIFY THIS PATH ON YOUR CLIENT PROJECT'S FILE SYSTEM
 import { useRouter } from 'next/router';
 
 const PlanPurchase = () => {
@@ -25,10 +25,11 @@ const PlanPurchase = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'plans'), (snapshot) => {
+    // --- CRITICAL FIX: Changed collection name from 'plans' to 'MANAGE_PLAN' ---
+    const unsubscribe = onSnapshot(collection(db, 'MANAGE_PLAN'), (snapshot) => {
       const fetchedPlans = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(plan => plan.enabled);
+        .filter(plan => plan.enabled); // Only show plans that are marked as 'enabled'
       setPlans(fetchedPlans);
     });
 
@@ -149,7 +150,8 @@ const PlanPurchase = () => {
               </div>
               <div className="border-t border-gray-300 mt-2 mb-4 lg:mt-6 lg:mb-6" />
               <ul className="space-y-2">
-                {plan.highlights.map((highlight, index) => {
+                {/* Ensure 'highlights' is an array before mapping */}
+                {plan.highlights?.map((highlight, index) => {
                   const [label, value] = highlight.split(': ');
                   return (
                     <li key={index} className="flex justify-between text-xs text-gray-600">
