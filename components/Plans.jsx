@@ -1,85 +1,104 @@
-import React from 'react';
-import { FiCheckCircle, FiXCircle } from 'react-icons/fi';
-import { plans } from './data/plans';
+// pages/plans.js
+'use client'; // This component runs on the client side
 
-const PlansSection = () => {
-  return (
-    <section className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 font-garamond">Our Plans</h2>
-          <p className="text-base text-gray-700 leading-relaxed font-barlow max-w-2xl mx-auto">
-            Choose a plan that aligns with your goals — from entry-level investments to premium legacy options.
-          </p>
-        </div>
+import Navbar from '@/components/Navbar';
+import HeroBanner from '@/components/HeroBanner';
+import React, { useState, useEffect } from 'react';
+import Footer from '@/components/Footer';
+import Loader from '@/components/Loader';
+import Head from 'next/head';
+import { collection, onSnapshot } from 'firebase/firestore';
+import db from '@/lib/firebase';
+import { useRouter } from 'next/router';
+// --- NEW IMPORT FOR TRANSLATION ---
+import { useTranslation } from 'next-i18next';
+// --- END NEW IMPORT ---
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 font-barlow">
-          {plans.map((plan, index) => (
-            <div key={index} className="relative">
-              <div className={`z-50 absolute top-0 left-0 w-full h-2 ${plan.barColor} rounded-t-md`}></div>
-              <div
-                className={`relative flex flex-col h-full rounded-md shadow-lg p-6 border ${
-                  plan.enabled ? 'bg-white' : 'bg-gray-200 opacity-50'
-                }`}
-              >
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold">{plan.plan}</h3>
-                  <span className="text-sm font-medium text-indigo-600">ROI - {plan.roi}</span>
-                </div>
-                <p className="text-sm text-gray-600 mb-6">{plan.subTitle}</p>
-                <p className="text-gray-800 text-sm mb-4 flex-grow">{plan.description}</p>
+function PlansPage() {
+    const [pageLoading, setPageLoading] = useState(true);
+    const [plans, setPlans] = useState([]);
+    const router = useRouter();
+    // --- Initialize the translation hook ---
+    const { t } = useTranslation('common');
+    // --- End translation hook initialization ---
 
-                <ul className="text-sm text-gray-700 divide-y divide-gray-200 mb-6">
-                  {plan.highlights.map((item, idx) => {
-                      const [label, value] = item.split(':');
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setPageLoading(false);
+        }, 1000);
 
-                      // Check if the value is a monetary value (Deposit, Investment Capital)
-                      const isMoney = label.includes('Deposit') || label.includes('Investment Capital');
-                      const displayValue = isMoney ? `$${value.trim()}` : value.trim();  // Adding $ and trimming extra spaces
+        // Fetch plans from 'MANAGE_PLAN' collection
+        const unsubscribe = onSnapshot(collection(db, 'MANAGE_PLAN'), (snapshot) => {
+            const fetchedPlans = snapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .filter(plan => plan.enabled); // Only show plans that are marked as 'enabled'
+            setPlans(fetchedPlans);
+        });
 
-                      return (
-                          <li key={idx} className="py-2 flex justify-between">
-                              <span>{label}</span>
-                              <span className="font-medium">{displayValue}</span>
-                          </li>
-                      );
-                  })}
-                </ul>
+        return () => {
+            clearTimeout(timer);
+            unsubscribe();
+        };
+    }, []);
 
-                <ul className="mt-4 space-y-2 flex-grow">
-                  {plan.points.map((point, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-gray-700">
-                      {point.enabled ? (
-                        <FiCheckCircle className="text-green-500 w-5 h-5" />
-                      ) : (
-                        <FiXCircle className="text-gray-400 w-5 h-5 line-through" />
-                      )}
-                      <span className={point.enabled ? '' : 'line-through text-gray-400'}>{point.text}</span>
-                    </li>
-                  ))}
-                </ul>
+    if (pageLoading) {
+        return <Loader />;
+    }
 
-                <div className="mt-auto">
-                  <button
-                    className={`mt-8 w-full py-2 rounded-md ${plan.buttonStyle}`}
-                    disabled={!plan.enabled}
-                  >
-                    {plan.cta}
-                  </button>
-                </div>
-
-                {!plan.enabled && (
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-1/2 w-3/5 bg-[#262626] rounded-2xl bg-opacity-50 flex items-center justify-center font-semibold text-white">
-                    Coming Soon...
-                  </div>
+    return (
+        <>
+            <Head>
+                {/* Translate Head title */}
+                <title>{t('plans_page_title')}</title>
+                {/* Translate Head meta description */}
+                <meta
+                    name="description"
+                    content={t('plans_page_meta_description')}
+                />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+            </Head>
+            <Navbar />
+            <HeroBanner
+                image="/rev-1.png"
+                // Translate HeroBanner title
+                title={t('plans_hero_title')}
+                // Translate HeroBanner description
+                description={t('plans_hero_description')}
+            />
+            <section className="min-h-screen bg-gray-50 px-4 py-12 sm:px-8 lg:px-16">
+                {plans.length === 0 ? (
+                    // Translate "No active plans" message
+                    <p className="text-center text-gray-600 text-lg">{t('no_active_plans_message')}</p>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {plans.map(plan => (
+                            <div key={plan.id} className="bg-white rounded-lg shadow-lg p-6 flex flex-col justify-between">
+                                <div>
+                                    <h2 className="text-xl font-bold text-blue-800 mb-2">{plan.plan}</h2>
+                                    <p className="text-sm text-gray-600 mb-1">{plan.subTitle}</p>
+                                    <p className="text-sm text-gray-500 mb-2">{plan.description}</p>
+                                    <p className="text-lg font-bold text-gray-800 mb-1">{plan.price}</p>
+                                    <p className="text-green-600 font-semibold mb-3">{plan.roi}</p>
+                                    <ul className="list-disc list-inside text-sm text-gray-700 mb-4">
+                                        {plan.highlights?.map((item, i) => (
+                                            <li key={i}>{item}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <button
+                                    className={`${plan.buttonStyle || 'bg-blue-600'} text-white py-2 mt-auto rounded hover:opacity-90 transition`}
+                                    onClick={() => router.push('/signup')}
+                                >
+                                    {plan.cta || t('get_started_cta')} {/* Translate fallback CTA */}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
+            </section>
+            <Footer />
+        </>
+    )
+}
 
-export default PlansSection;
+export default PlansPage;

@@ -1,12 +1,17 @@
+// components/Hero.jsx
+'use client';
+
 import { useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay, EffectFade } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/effect-fade";
-
-import { FaStar } from "react-icons/fa";
 import Link from 'next/link';
+
+// --- NEW IMPORT FOR TRANSLATION ---
+import { useTranslation } from 'next-i18next';
+// --- END NEW IMPORT ---
 
 export default function Hero() {
   const [activeSlide, setActiveSlide] = useState(0);
@@ -14,27 +19,31 @@ export default function Hero() {
     setActiveSlide(swiper.activeIndex);
   };
 
+  // --- Initialize the translation hook ---
+  const { t } = useTranslation('common'); // Assuming 'common' is your default namespace for general strings
+  // --- End translation hook initialization ---
+
   const slides = [
     {
       image: '/img-11.jpg',
-      title: 'Grow with Purpose',
-      subtitle: 'Support sustainable agriculture. Earn steady returns.',
-      cta: 'Start Investing'
+      // --- Use translation keys for slide content ---
+      titleKey: 'hero_slide1_title',
+      subtitleKey: 'hero_slide1_subtitle',
+      ctaKey: 'hero_slide1_cta'
     },
     {
       image: '/img-7.jpg',
-      title: 'Crypto, Controlled',
-      subtitle: 'Harness volatility with algorithmic trading & DeFi.',
-      cta: 'Explore Crypto'
+      titleKey: 'hero_slide2_title',
+      subtitleKey: 'hero_slide2_subtitle',
+      ctaKey: 'hero_slide2_cta'
     },
     {
       image: '/img-6.png',
-      title: 'Power the Future',
-      subtitle: 'Invest in clean energy with real-world impact.',
-      cta: 'Invest in Energy'
+      titleKey: 'hero_slide3_title',
+      subtitleKey: 'hero_slide3_subtitle',
+      ctaKey: 'hero_slide3_cta'
     },
   ];
-  
 
   return (
     <section className="relative">
@@ -60,9 +69,7 @@ export default function Hero() {
               <div className="absolute inset-0 bg-[#000000]/50 z-0" />
 
               <div className="relative z-10 px-6 py-20 text-left text-white max-w-5xl mx-auto">
-                {/* Title & Subtitle */}
-
-                {/* Stars */}
+                {/* Stars - keeping as static characters as they are visual */}
                 <div className="flex space-x-1 text-yellow-400 text-xl mb-2">
                     {[...Array(5)].map((_, i) => (
                     <span key={i}>★</span>
@@ -70,20 +77,20 @@ export default function Hero() {
                 </div>
 
                 <h1 className="text-3xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-md">
-                  {slide.title}<br />
-                  {slide.subtitle}
+                  {t(slide.titleKey)}<br /> {/* Translate title */}
+                  {t(slide.subtitleKey)} {/* Translate subtitle */}
                 </h1>
 
-                {/* Short text under stars */}
+                {/* Short text under stars - now translated */}
                 <p className="text-sm lg:text-lg mb-6 text-white/90 font-barlow">
-                  Trusted by thousands of investors worldwide.
+                  {t('hero_trusted_message')} {/* Translate "Trusted by thousands..." */}
                 </p>
 
-                {/* Outline button */}
-                <Link href="/plans">
-                  <span className="text-sm uppercase font-barlow inline-block border border-white hover:bg-white hover:text-black text-white px-6 py-3 shadow-md transition cursor-pointer">
-                    {slide.cta}
-                  </span>
+                {/* Outline button - now translated */}
+                <Link href="/plans" legacyBehavior>
+                  <a className="text-sm uppercase font-barlow inline-block border border-white hover:bg-white hover:text-black text-white px-6 py-3 shadow-md transition cursor-pointer">
+                    {t(slide.ctaKey)} {/* Translate CTA button text */}
+                  </a>
                 </Link>
               </div>
             </div>

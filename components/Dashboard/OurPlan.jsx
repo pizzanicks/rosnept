@@ -5,7 +5,9 @@ import dayjs from 'dayjs';
 import { collection, onSnapshot } from 'firebase/firestore';
 import db from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
+// --- FIX: Import userId directly from useFirebase ---
 import { useFirebase } from '@/lib/firebaseContext';
+// --- END FIX ---
 import Notification from '../Notification/notification';
 import { useRouter } from 'next/router';
 
@@ -15,23 +17,23 @@ const PlanPurchase = () => {
   const [amount, setAmount] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [amountError, setAmountError] = useState("");
-  const { userInvestment } = useFirebase();
+  // --- FIX: Destructure userId here ---
+  const { userInvestment, userId } = useFirebase(); // Get userId alongside userInvestment
+  // --- END FIX ---
   const [activating, setActivating] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
   const router = useRouter();
 
-  // --- NEW STATE: Controls whether we show the list of plans or single plan details ---
   const [isViewingSinglePlanDetails, setIsViewingSinglePlanDetails] = useState(false);
 
 
   useEffect(() => {
-    // --- CRITICAL FIX: Changed collection name from 'plans' to 'MANAGE_PLAN' ---
     const unsubscribe = onSnapshot(collection(db, 'MANAGE_PLAN'), (snapshot) => {
       const fetchedPlans = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(plan => plan.enabled); // Only show plans that are marked as 'enabled'
+        .filter(plan => plan.enabled);
       setPlans(fetchedPlans);
     });
 
@@ -45,25 +47,22 @@ const PlanPurchase = () => {
     transition: { type: "spring", stiffness: 300, damping: 30 },
   };
 
-  // --- MODIFIED: handleInvestNow now sets state to view single plan details ---
   const handleInvestNow = (plan) => {
     setSelectedPlan(plan);
-    setAmount(''); // Clear previous amount
-    setAmountError(''); // Clear any previous errors
-    setIsViewingSinglePlanDetails(true); // Show the single plan detail view
+    setAmount('');
+    setAmountError('');
+    setIsViewingSinglePlanDetails(true);
   };
 
-  // --- NEW: Function to go back to the list of plans ---
   const handleBackToPlans = () => {
     setSelectedPlan(null);
     setAmount('');
     setAmountError('');
-    setIsViewingSinglePlanDetails(false); // Go back to showing all plans
+    setIsViewingSinglePlanDetails(false);
   };
 
-  // --- MODIFIED: handleContinue logic to include deposit redirection ---
   const handleContinue = () => {
-    if (!selectedPlan) return; // Should not happen if flow is correct
+    if (!selectedPlan) return;
 
     const minimumAmount = parseFloat(selectedPlan.highlights.find(h => h.includes('Minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) || 0;
     const maximumAmount = parseFloat(selectedPlan.highlights.find(h => h.includes('Maximum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) || Infinity;
@@ -80,13 +79,10 @@ const PlanPurchase = () => {
       return;
     }
     
-    // Check if wallet balance is sufficient
     if (parsedAmount > userInvestment?.walletBal) {
       setNotificationType('error');
       setNotificationMessage('Insufficient wallet balance. Please deposit funds to proceed.');
       setShowNotification(true);
-      // We don't return here immediately, instead, allow user to click deposit
-      // The button for deposit will be rendered based on this notification.
       return; // Stop the investment process for now, show notification.
     }
 
@@ -95,15 +91,19 @@ const PlanPurchase = () => {
       return;
     }
 
-    setAmountError(""); // Clear any previous errors
-    // If validation passes and balance is sufficient, then proceed to activate.
-    // In your original code, this was `setStep(2)`. Given the simpler flow,
-    // we can directly call activatePlan from here or make the "Confirm Investment" button visible.
-    // For now, let's keep it simple and assume a confirmation step is implicitly handled by the activatePlan button.
+    setAmountError("");
     activatePlan(); // Directly activate if all checks pass
   };
 
   const activatePlan = async () => {
+    // --- Add a check here to ensure userId is available before calling API ---
+    if (!userId) {
+      setNotificationType('error');
+      setNotificationMessage('User not authenticated. Please log in again.');
+      setShowNotification(true);
+      return;
+    }
+
     if (!selectedPlan || !amount || parseFloat(amount) <= 0) {
       setNotificationType('error');
       setNotificationMessage('Please select a plan and enter a valid amount.');
@@ -115,11 +115,12 @@ const PlanPurchase = () => {
 
     setActivating(true);
     try {
-      // Simulate API call to activate plan
-      const response = await fetch('/api/activatePlan', { // Ensure this API route exists
+      const response = await fetch('/api/activatePlan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userInvestment?.id, selectedPlan, amount: parsedAmount }),
+        // --- CRITICAL FIX: Use the top-level userId from useFirebase ---
+        body: JSON.stringify({ userId: userId, selectedPlan, amount: parsedAmount }),
+        // --- END FIX ---
       });
 
       if (!response.ok) {
@@ -127,11 +128,11 @@ const PlanPurchase = () => {
         throw new Error(errorData.message || 'Failed to activate plan');
       }
 
-      await response.json(); // Process response if needed
-      setShowModal(true); // Show success modal
-      setIsViewingSinglePlanDetails(false); // Go back to plan list after activation
-      setAmount(''); // Clear amount
-      setSelectedPlan(null); // Clear selected plan
+      await response.json();
+      setShowModal(true);
+      setIsViewingSinglePlanDetails(false);
+      setAmount('');
+      setSelectedPlan(null);
     } catch (error) {
       console.error("Error activating plan:", error);
       setNotificationMessage(`An error occurred while activating plan: ${error.message}`);
@@ -147,7 +148,7 @@ const PlanPurchase = () => {
 
   const closeSuccessModal = () => {
     setShowModal(false);
-    router.push('/dashboard'); // Or push to a specific investment history page
+    router.push('/dashboard');
   };
 
   return (
@@ -159,7 +160,6 @@ const PlanPurchase = () => {
         </div>
       </div>
 
-      {/* Show Active Plan if exists */}
       {userInvestment?.activePlan?.isActive && (
         <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-8">
           <h3 className="text-lg font-semibold text-blue-900 mb-2">Your Active Plan</h3>
@@ -170,7 +170,6 @@ const PlanPurchase = () => {
           {userInvestment.activePlan.daysCompleted >= 7 && (
             <button
               className="mt-3 bg-green-600 text-white py-2 px-4 rounded"
-              // Consider if this should reactivate the current plan or guide to new investment
               onClick={() => handleInvestNow(plans.find(p => p.plan === userInvestment.activePlan.planName))}
             >
               Restart Investment Cycle
@@ -179,9 +178,7 @@ const PlanPurchase = () => {
         </div>
       )}
 
-      {/* --- Conditional Rendering for All Plans vs. Single Plan Details --- */}
       {isViewingSinglePlanDetails && selectedPlan ? (
-        // --- Single Plan Details and Investment Input ---
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -235,7 +232,6 @@ const PlanPurchase = () => {
 
           <div className="border-t border-gray-300 my-4" />
 
-          {/* Amount Input Section */}
           <div className="space-y-3">
             <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
               Enter Investment Amount (USDT)
@@ -246,7 +242,7 @@ const PlanPurchase = () => {
               value={amount}
               onChange={(e) => {
                 setAmount(e.target.value);
-                setAmountError(""); // Clear error on typing
+                setAmountError("");
               }}
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder={`Min: ${parseFloat(selectedPlan.highlights.find(h => h.includes('Minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) || 0} USDT`}
@@ -255,7 +251,6 @@ const PlanPurchase = () => {
             />
             {amountError && <p className="text-red-500 text-xs mt-1">{amountError}</p>}
             
-            {/* Wallet Balance Display */}
             <p className="text-sm text-gray-600">
               Your Wallet Balance:{" "}
               <span className="font-semibold text-blue-800">
@@ -263,10 +258,9 @@ const PlanPurchase = () => {
               </span>
             </p>
 
-            {/* Action Buttons */}
             <div className="flex space-x-4 mt-6">
                 <button
-                    onClick={handleContinue} // This now directly tries to activate or show error/deposit
+                    onClick={handleContinue}
                     className={`flex-1 py-3 px-4 rounded-md font-medium text-white transition ${activating ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                     disabled={activating}
                 >
@@ -280,10 +274,9 @@ const PlanPurchase = () => {
                     )}
                 </button>
             </div>
-            {/* Conditional Deposit Button if balance is insufficient and notification is shown */}
             {showNotification && notificationType === 'error' && notificationMessage.includes('Insufficient') && (
                 <button
-                    onClick={() => router.push('/dashboard/deposit')} // Adjust this path to your actual deposit page
+                    onClick={() => router.push('/dashboard/deposit')}
                     className="mt-4 w-full py-3 px-4 rounded-md font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 transition"
                 >
                     Go to Deposit Page
@@ -292,7 +285,6 @@ const PlanPurchase = () => {
           </div>
         </motion.div>
       ) : (
-        // --- Grid of All Investment Plans ---
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map(plan => (
             <div key={plan.id} className="bg-white rounded shadow-lg p-6">
@@ -340,7 +332,7 @@ const PlanPurchase = () => {
           type={notificationType}
           message={notificationMessage}
           onClose={() => setShowNotification(false)}
-          show={showNotification}
+          show={true}
         />
       )}
 
