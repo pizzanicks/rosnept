@@ -123,8 +123,14 @@ const PlanPurchase = () => {
         selectedPlan: selectedPlan,         // Your API expects selectedPlan object
         amount: parsedAmount                // Your API expects a numeric amount
       };
-      console.log("Payload being sent to /api/activatePlan:", payloadToSend);
-      // --- END CONSOLE.LOG ADDITION ---
+      // console.log("[PROD DEBUG] Payload:", {
+      //   userId,
+      //   selectedPlan,
+      //   selectedPlanPlan: selectedPlan?.plan,
+      //   amount,
+      //   parsedAmount
+      // });
+      
 
 
       const response = await fetch('/api/activatePlan', {

@@ -10,7 +10,9 @@ export default async function handler(req, res) {
   try {
     const { userInvestment, selectedPlan, amount } = req.body;
 
-    if (!userInvestment?.userId || !selectedPlan?.plan || !amount) {
+    const parsedAmount = parseFloat(amount); // ✅ Ensure numeric value
+
+    if (!userInvestment?.userId || !selectedPlan?.plan || !parsedAmount) {
       return res.status(400).json({ message: 'Invalid request data' });
     }
 
@@ -29,18 +31,17 @@ export default async function handler(req, res) {
         throw new Error('Invalid wallet balance');
       }
 
-      if (currentData.walletBal < amount) {
+      if (currentData.walletBal < parsedAmount) {
         throw new Error('Insufficient balance');
       }
 
-      // ✅ MAIN STRUCTURED PLAN OBJECT
       const activePlan = {
         planName: selectedPlan.plan,
-        amount: amount,
-        roiPercent: 0.04, // 4% daily
-        startDate: serverTimestamp(), // now
-        endDate: null,                // we'll set this during 7-day ROI logic
-        nextPayoutDate: null,        // will be updated each day
+        amount: parsedAmount,
+        roiPercent: 0.04,
+        startDate: serverTimestamp(),
+        endDate: null,
+        nextPayoutDate: null,
         isActive: true,
         daysCompleted: 0,
       };
@@ -49,8 +50,8 @@ export default async function handler(req, res) {
         activePlan: activePlan,
         activatedOn: serverTimestamp(),
         hasActivePlan: true,
-        walletBal: currentData.walletBal - amount,
-        lockedBal: amount,
+        walletBal: currentData.walletBal - parsedAmount,
+        lockedBal: parsedAmount,
       });
     });
 
