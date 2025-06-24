@@ -6,12 +6,11 @@ import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 
 // Get the directory name of the current module file.
+// If this file is in your project root, __dirname will be your project root.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Define your i18n configuration object.
-// IMPORTANT: 'localePath', 'debug', 'saveMissing' are direct properties of i18nConfig,
-// NOT nested inside the 'i18n' object that Next.js expects directly.
 const i18nConfig = {
   // This 'i18n' object directly maps to what Next.js expects in its next.config.mjs file.
   // It should only contain 'locales' and 'defaultLocale' (and optionally 'domains').
@@ -20,12 +19,15 @@ const i18nConfig = {
     defaultLocale: 'en', // The default language for your application
   },
 
-  // These are specific configurations for 'next-i18next' itself,
-  // and are *not* passed directly into Next.js's native i18n object.
-  // They are used by the `appWithTranslation` and `serverSideTranslations` functions.
-  localePath: resolve(__dirname, './public/locales'), // Path to your translation files
-  // debug: process.env.NODE_ENV === 'development', // Uncomment to enable i18n debugging in development
-  // saveMissing: true, // Uncomment to automatically add missing keys to your default locale file
+  // These are specific configurations for 'next-i18next' itself.
+  // They tell 'next-i18next' where to find your translation files on the server.
+  // This path must be relative to your project's root.
+  // Since __dirname here is the project root, we can directly append 'public/locales'.
+  localePath: resolve(__dirname, 'public/locales'), // Corrected path!
+
+  // Optional: Uncomment these for debugging and automatic missing key saving
+  // debug: process.env.NODE_ENV === 'development', // Enable i18n debugging in development
+  // saveMissing: true, // Automatically add missing keys to your default locale file (e.g., en/common.json)
 };
 
 // Export the configuration using ES module syntax.

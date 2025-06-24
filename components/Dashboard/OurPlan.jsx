@@ -5,9 +5,7 @@ import dayjs from 'dayjs';
 import { collection, onSnapshot } from 'firebase/firestore';
 import db from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-// --- FIX: Import userId directly from useFirebase ---
-import { useFirebase } from '@/lib/firebaseContext';
-// --- END FIX ---
+import { useFirebase } from '@/lib/firebaseContext'; // Import useFirebase
 import Notification from '../Notification/notification';
 import { useRouter } from 'next/router';
 
@@ -17,9 +15,7 @@ const PlanPurchase = () => {
   const [amount, setAmount] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [amountError, setAmountError] = useState("");
-  // --- FIX: Destructure userId here ---
   const { userInvestment, userId } = useFirebase(); // Get userId alongside userInvestment
-  // --- END FIX ---
   const [activating, setActivating] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState('');
@@ -64,8 +60,13 @@ const PlanPurchase = () => {
   const handleContinue = () => {
     if (!selectedPlan) return;
 
-    const minimumAmount = parseFloat(selectedPlan.highlights.find(h => h.includes('Minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) || 0;
-    const maximumAmount = parseFloat(selectedPlan.highlights.find(h => h.includes('Maximum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) || Infinity;
+    // Make sure 'highlights' is an array and contains strings that can be parsed.
+    // Example: "Minimum: 100 USDT"
+    const minimumAmountHighlight = selectedPlan.highlights?.find(h => h.includes('Minimum'));
+    const minimumAmount = minimumAmountHighlight ? parseFloat(minimumAmountHighlight.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) : 0;
+    
+    const maximumAmountHighlight = selectedPlan.highlights?.find(h => h.includes('Maximum'));
+    const maximumAmount = maximumAmountHighlight ? parseFloat(maximumAmountHighlight.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) : Infinity;
 
     const parsedAmount = parseFloat(amount);
 
@@ -79,7 +80,8 @@ const PlanPurchase = () => {
       return;
     }
     
-    if (parsedAmount > userInvestment?.walletBal) {
+    // Ensure walletBal is a number before comparison
+    if (typeof userInvestment?.walletBal !== 'number' || parsedAmount > userInvestment.walletBal) {
       setNotificationType('error');
       setNotificationMessage('Insufficient wallet balance. Please deposit funds to proceed.');
       setShowNotification(true);
@@ -115,12 +117,20 @@ const PlanPurchase = () => {
 
     setActivating(true);
     try {
+      // --- START CONSOLE.LOG ADDITION ---
+      const payloadToSend = {
+        userInvestment: { userId: userId }, // Your API expects userInvestment.userId
+        selectedPlan: selectedPlan,         // Your API expects selectedPlan object
+        amount: parsedAmount                // Your API expects a numeric amount
+      };
+      console.log("Payload being sent to /api/activatePlan:", payloadToSend);
+      // --- END CONSOLE.LOG ADDITION ---
+
+
       const response = await fetch('/api/activatePlan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // --- CRITICAL FIX: Use the top-level userId from useFirebase ---
-        body: JSON.stringify({ userId: userId, selectedPlan, amount: parsedAmount }),
-        // --- END FIX ---
+        body: JSON.stringify(payloadToSend), // Use the new payloadToSend variable
       });
 
       if (!response.ok) {
@@ -128,7 +138,7 @@ const PlanPurchase = () => {
         throw new Error(errorData.message || 'Failed to activate plan');
       }
 
-      await response.json();
+      await response.json(); // Consume the successful response
       setShowModal(true);
       setIsViewingSinglePlanDetails(false);
       setAmount('');
