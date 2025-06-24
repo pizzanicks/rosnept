@@ -1,12 +1,60 @@
 import { FiInfo, FiArrowRight } from "react-icons/fi";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useFirebase } from "@/lib/firebaseContext";
+import { useFirebase } from "@/lib/firebaseContext"; // ✅
 import Link from "next/link";
+import { doc, updateDoc } from "firebase/firestore";
+import db from "@/lib/firebase"; // ✅
+
 
 export default function InvestmentSection() {
+  const { userInvestment, currentUser } = useFirebase();
+  // const { currentUser } = useAuth();
 
-  const { userInvestment } = useFirebase();
+  const updatePlanStatus = async (newStatus) => {
+    if (!currentUser) return;
+
+    const userRef = doc(db, "INVESTMENT", currentUser.uid);
+    try {
+      await updateDoc(userRef, {
+        "activePlan.status": newStatus
+      });
+      alert(`Plan ${newStatus} successfully.`);
+    } catch (err) {
+      console.error("Failed to update plan status:", err);
+      alert("Error updating plan status.");
+    }
+  };
+
+  const restartCompletedPlan = async () => {
+    if (!currentUser || !userInvestment?.activePlan) return;
+
+    const userRef = doc(db, "INVESTMENT", currentUser.uid);
+
+    try {
+      const newPlan = {
+        ...userInvestment.activePlan,
+        daysCompleted: 0,
+        isActive: true,
+        status: "active",
+        startDate: new Date(),
+        endDate: null,
+        nextPayoutDate: null,
+      };
+
+      await updateDoc(userRef, {
+        activePlan: newPlan,
+        activatedOn: new Date(),
+        lockedBal: (userInvestment.lockedBal || 0) + userInvestment.activePlan.amount,
+        walletBal: (userInvestment.walletBal || 0) - userInvestment.activePlan.amount
+      });
+
+      alert("Plan restarted successfully.");
+    } catch (err) {
+      console.error("Failed to restart plan:", err);
+      alert("Error restarting plan.");
+    }
+  };
 
   return (
     <div className="space-y-8 p-2 lg:p-8">
@@ -98,12 +146,20 @@ export default function InvestmentSection() {
           {/* Plan Info */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="text-xl font-bold text-green-700 mb-1">{ userInvestment?.activePlan ?? "N/A" }</div>
+              <div className="text-xl font-bold text-green-700 mb-1">
+                {userInvestment?.activePlan?.planName || "N/A"}
+              </div>
               <div className="text-sm text-gray-500">
-                Activated on:{" "}
-                {userInvestment?.activatedOn?.seconds
-                  ? new Date(userInvestment.activatedOn.seconds * 1000).toLocaleDateString()
-                  : "N/A"}
+                Activated on: {userInvestment?.activatedOn?.seconds ? new Date(userInvestment.activatedOn.seconds * 1000).toLocaleDateString() : "N/A"}
+              </div>
+              <div className="text-sm text-gray-500">
+                ROI: {(userInvestment?.activePlan?.roiPercent ?? 0) * 100}% / day
+              </div>
+              <div className="text-sm text-gray-500">
+                Days Completed: {userInvestment?.activePlan?.daysCompleted ?? 0} / 7
+              </div>
+              <div className="text-sm text-gray-500">
+                Status: {userInvestment?.activePlan?.status ?? "N/A"}
               </div>
             </div>
 
@@ -116,6 +172,53 @@ export default function InvestmentSection() {
               <div className="bg-blue-400 h-4 w-2 rounded"></div>
             </div>
           </div>
+
+          {/* Control Buttons */}
+          {userInvestment?.activePlan && (
+            <div className="flex gap-2 mt-4 flex-wrap">
+              {/* Resume button */}
+              {userInvestment.activePlan.status === "paused" && (
+                <button
+                  onClick={() => updatePlanStatus("active")}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm"
+                >
+                  Resume Plan
+                </button>
+              )}
+
+              {/* Pause button */}
+              {userInvestment.activePlan.status === "active" && (
+                <button
+                  onClick={() => updatePlanStatus("paused")}
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm"
+                >
+                  Pause Plan
+                </button>
+              )}
+
+              {/* Stop button */}
+              {userInvestment.activePlan.status !== "stopped" && (
+                <button
+                  onClick={() => updatePlanStatus("stopped")}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
+                >
+                  Stop Plan
+                </button>
+              )}
+
+              {/* Restart button */}
+              {userInvestment.activePlan.status === "completed" && (
+                <button
+                  onClick={restartCompletedPlan}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"
+                >
+                  Restart Plan
+                </button>
+              )}
+            </div>
+          )}
+
+
 
           {/* Separator & Button */}
           <hr className="my-4" />
