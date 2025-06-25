@@ -33,7 +33,7 @@ export default function Navbar() {
   // Define authentication-related links using translation keys.
   const authLinks = [
     { name: t('login_button'), link: '/auth/login' }, // --- NOW TRANSLATED ---
-    { name: t('signup_button'), link: '/auth/signup' } // --- NOW TRANSLATED ---
+    { name: t('signup_button'), link: '/signup' } // --- NOW TRANSLATED ---
   ];
 
   // Effect to handle the scroll behavior of the Navbar (changing background/text color).
