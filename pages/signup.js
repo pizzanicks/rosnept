@@ -6,8 +6,7 @@ import Image from 'next/image';
 import Head from 'next/head';
 import Link from 'next/link';
 import Loader from '@/components/Loader';
-// import Notification from '@/components/Notification'; // Corrected path (assuming components/Notification.js/jsx)
-import Notification from '@/components/Notification/notification';
+import Notification from '@/components/Notification/notification'; // Ensure this path is correct
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase'; // Assuming '@/lib/firebase' is correct for client project
 import { useRouter } from 'next/router';
@@ -63,27 +62,62 @@ export default function SignupPage() {
       const user = userCredential.user;
       userId = user.uid;
 
+      // Generate a simple referral code (you might have more sophisticated logic)
+      const newReferralCode = user.uid.substring(0, 8); // Example: first 8 chars of UID
+
+      // --- START: MODIFIED userData OBJECT ---
       const userData = {
         userId: userId,
         email: email,
         fullName: fullName,
-        referralCode: referralCode || null,
-        // Add initial ROI/investment related fields for new users
-        initialInvestmentAmount: 0,
-        currentROI: 0,
-        currentROIValue: 0,
-        roiIncreaseDayCount: 0,
-        earningStatus: 'inactive', // Default status for new users
-        roiStartDate: null,
-        lastROIUpdateDate: null,
-        investmentPlanId: null, // User needs to select a plan later
-      };
+        userName: fullName, // Assuming userName is same as fullName for signup
+        
+        // Existing fields from your Firestore USERS document structure
+        address: "",
+        country: "",
+        createdAt: new Date(), // Set creation timestamp
+        dob: "",
+        earningStatus: "inactive", // Default status for new users
+        gender: "",
+        hasActiveInvestments: false, // Default: no active investments initially
+        hasProvidedKYC: false,
+        kycVerified: false,
+        phone: "", // Assuming phone is not collected on signup, default empty
+        referralLink: `http://localhost:3000/auth/signup?referralCode=${newReferralCode}`, // Generated referral link
+        referredby: referralCode || null, // Capture referral code if present in URL
+        status: "active", // Default user status
+        suspended: false, // Default: not suspended
+        telegram: "", // Default value if not collected
+        updatedAt: new Date(), // Set initial update timestamp
+        verified: false, // Default: email verification pending
 
-      // Save user data via API (assuming this API route exists and interacts with Firestore)
+        // --- NEW FIELDS TO BE INITIALIZED ---
+        walletBalance: 0,                   // All new users start with 0 in their wallet
+        currentPlanDaysCompleted: 0,        // Initial days completed for any plan
+        currentPlanRoiPercentage: 0,        // Initial ROI percentage
+        lastRoiPaymentDate: '',             // Empty string or null, matches cron job's field name
+        adminNote: '',                      // Empty note for admin
+        transactionHistory: [],             // Empty array for transactions
+        kycDocs: [],                        // Empty array for KYC documents
+
+        // --- OPTIONAL: Existing fields from your old 'userData' if still desired for new users ---
+        // These might be redundant if currentPlanDaysCompleted/RoiPercentage cover it,
+        // or if they are primarily managed in the INVESTMENT document.
+        // Uncomment if your dashboard specifically relies on these being in USERS on creation.
+        // initialInvestmentAmount: 0,
+        // currentROI: 0,
+        // currentROIValue: 0,
+        // roiIncreaseDayCount: 0,
+        // roiStartDate: null,
+        // investmentPlanId: null,
+      };
+      // --- END: MODIFIED userData OBJECT ---
+
+      // Save user data via API
       const response = await fetch("/api/createUser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({userData}),
+        body: JSON.stringify({ userData }), // Send the complete userData object
       });
 
       if (!response.ok) throw new Error("Failed to save user data to Firestore via API");
@@ -163,7 +197,7 @@ export default function SignupPage() {
                 <div className="mb-6 text-center">
                   <Link href={'/'} legacyBehavior>
                     <Image src={'/logo-2.png'} height={500} width={500} alt='logo image' className="w-32 lg:w-44 h-8 lg:h-10 mb-4 mx-auto" />
-                  </Link>{/* <--- FIXED: CLOSING LINK TAG WAS MISSING HERE */}
+                  </Link>
                   <h3 className="text-lg md:text-xl font-semibold text-gray-800">{t('signup_create_account_heading')}</h3>
                 </div>
 
