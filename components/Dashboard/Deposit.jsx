@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaBitcoin, FaDollarSign, FaCheckCircle } from "react-icons/fa";
 import Image from "next/image";
 import { useFirebase } from "@/lib/firebaseContext";
+import { getAuth, onAuthStateChanged } from "firebase/auth"; // ✅ Import Firebase Auth
 
 const DepositSlides = () => {
   const [step, setStep] = useState("input");
@@ -10,11 +11,24 @@ const DepositSlides = () => {
   const [crypto, setCrypto] = useState("BTC");
   const [btcRate, setBtcRate] = useState(null);
   const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
-  const { userId } = useFirebase();
+  const { userId: contextUserId } = useFirebase(); // from your context
+  const [userId, setUserId] = useState(contextUserId || null); // ✅ local state for UID
   const [loading, setLoading] = useState(false);
   const [qrImage, setQrImage] = useState("");
   const [wltAddress, setWltAddress] = useState("");
 
+  // ✅ Get logged-in Firebase user UID if context doesn't provide it
+  useEffect(() => {
+    if (!userId) {
+      const auth = getAuth();
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setUserId(user.uid);
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [userId]);
 
   // Fetch BTC rate
   useEffect(() => {
@@ -28,9 +42,8 @@ const DepositSlides = () => {
         console.error("Error fetching BTC rate:", err);
       }
     };
-  
     getBtcRate();
-  }, []);  
+  }, []);
 
   // Countdown timer
   useEffect(() => {
@@ -51,28 +64,27 @@ const DepositSlides = () => {
       setQrImage("/usdt-qr.png");
       setWltAddress("TSDfmNFRpw6TMwJz6icpEfRY53cvRLJEht");
     }
-  }, [crypto])
-
+  }, [crypto]);
 
   const sendDepositReq = async () => {
     setLoading(true);
-    console.log("data:: ", amount, crypto, userId );
-  
+    console.log("data:: ", amount, crypto, userId); // ✅ should now print UID correctly
+
     try {
-      const response = await fetch('/api/sendDepositReq', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/sendDepositReq", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount, crypto, userId }),
       });
-  
+
       if (response.ok) {
-        console.log('Deposit request sent successfully!');
+        console.log("Deposit request sent successfully!");
       } else {
         const errorData = await response.json();
-        console.error('Update failed:', errorData);
+        console.error("Update failed:", errorData);
       }
     } catch (error) {
-      console.error('An error occurred:', error);
+      console.error("An error occurred:", error);
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -81,7 +93,6 @@ const DepositSlides = () => {
     }
   };
 
-  
   const cryptoOptions = [
     { label: "BTC", icon: <FaBitcoin />, value: "BTC" },
     { label: "USDT", icon: <FaDollarSign />, value: "USDT" },
@@ -109,7 +120,6 @@ const DepositSlides = () => {
               type="number"
               className="w-full border border-gray-300 p-2 rounded mb-4"
               placeholder="Enter amount in USD"
-            //   value={amount}
               onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
             />
 
@@ -170,7 +180,9 @@ const DepositSlides = () => {
               </div>
               <div className="flex justify-between py-2">
                 <span className="font-medium">Amount:</span>
-                <span className="text-gray-600">{convertedAmount} {crypto}</span>
+                <span className="text-gray-600">
+                  {convertedAmount} {crypto}
+                </span>
               </div>
               <div className="flex justify-between py-2">
                 <span className="font-medium">Time Left:</span>
@@ -188,26 +200,24 @@ const DepositSlides = () => {
             exit={{ x: "-100%" }}
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
             className="bg-white w-full max-w-md rounded-lg p-6 shadow-md text-center"
-            >
+          >
             <div className="flex justify-center mb-4">
-                <FaCheckCircle className="text-green-500 text-4xl" />
+              <FaCheckCircle className="text-green-500 text-4xl" />
             </div>
             <h2 className="text-lg font-semibold text-blue-800 mb-3">Countdown Complete</h2>
             <p className="text-sm text-gray-700">
-                If you have made the payment, please do not panic. Your transaction will be automatically confirmed and
-                credited to your dashboard wallet shortly.
+              If you have made the payment, please do not panic. Your transaction will be automatically confirmed and
+              credited to your dashboard wallet shortly.
             </p>
-            </motion.div>
+          </motion.div>
         )}
 
         {loading && (
-         <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-50">
-          <div className="w-8 lg:w-12 h-8 lg:h-12 rounded-full animate-spin border-4 border-t-transparent border-l-transparent border-r-blue-500 border-b-purple-500 shadow-lg"></div>
-        </div>
+          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-50">
+            <div className="w-8 lg:w-12 h-8 lg:h-12 rounded-full animate-spin border-4 border-t-transparent border-l-transparent border-r-blue-500 border-b-purple-500 shadow-lg"></div>
+          </div>
         )}
-
       </AnimatePresence>
-
     </div>
   );
 };
