@@ -1,235 +1,375 @@
-import { FiInfo, FiArrowRight } from "react-icons/fi";
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { useFirebase } from "@/lib/firebaseContext"; // ✅
-import Link from "next/link";
-import { doc, updateDoc } from "firebase/firestore";
-import db from "@/lib/firebase"; // ✅
+// components/Dashboard/OurPlan.js
+import React, { useState, useEffect } from 'react';
+import { FiCreditCard, FiInfo, FiArrowRight, FiCheckCircle, FiAlertTriangle } from 'react-icons/fi';
+import dayjs from 'dayjs';
+import { collection, onSnapshot } from 'firebase/firestore';
+import db from '@/lib/firebase';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useFirebase } from '@/lib/firebaseContext'; // Import useFirebase
+import Notification from '../Notification/notification';
+import { useRouter } from 'next/router';
+
+const PlanPurchase = () => {
+  const [plans, setPlans] = useState([]);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [amount, setAmount] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [amountError, setAmountError] = useState("");
+  const { userInvestment, userId } = useFirebase(); // Get userId alongside userInvestment
+  const [activating, setActivating] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationType, setNotificationType] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const router = useRouter();
+
+  const [isViewingSinglePlanDetails, setIsViewingSinglePlanDetails] = useState(false);
 
 
-export default function InvestmentSection() {
-  const { userInvestment, currentUser } = useFirebase();
-  // const { currentUser } = useAuth();
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'MANAGE_PLAN'), (snapshot) => {
+      const fetchedPlans = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(plan => plan.enabled);
+      setPlans(fetchedPlans);
+    });
 
-  const updatePlanStatus = async (newStatus) => {
-    if (!currentUser) return;
+    return () => unsubscribe();
+  }, []);
 
-    const userRef = doc(db, "INVESTMENT", currentUser.uid);
+  const slideVariants = {
+    initial: { x: "100%", opacity: 0 },
+    animate: { x: 0, opacity: 1 },
+    exit: { x: "-100%", opacity: 0 },
+    transition: { type: "spring", stiffness: 300, damping: 30 },
+  };
+
+  const handleInvestNow = (plan) => {
+    setSelectedPlan(plan);
+    setAmount('');
+    setAmountError('');
+    setIsViewingSinglePlanDetails(true);
+  };
+
+  const handleBackToPlans = () => {
+    setSelectedPlan(null);
+    setAmount('');
+    setAmountError('');
+    setIsViewingSinglePlanDetails(false);
+  };
+
+  const handleContinue = () => {
+    if (!selectedPlan) return;
+
+    // Make sure 'highlights' is an array and contains strings that can be parsed.
+    // Example: "Minimum: 100 USDT"
+    const minimumAmountHighlight = selectedPlan.highlights?.find(h => h.includes('Minimum'));
+    const minimumAmount = minimumAmountHighlight ? parseFloat(minimumAmountHighlight.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) : 0;
+    
+    const maximumAmountHighlight = selectedPlan.highlights?.find(h => h.includes('Maximum'));
+    const maximumAmount = maximumAmountHighlight ? parseFloat(maximumAmountHighlight.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) : Infinity;
+
+    const parsedAmount = parseFloat(amount);
+
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      setAmountError("Please enter a valid amount.");
+      return;
+    }
+
+    if (parsedAmount < minimumAmount) {
+      setAmountError(`Amount must be at least ${minimumAmount.toLocaleString()} USDT.`);
+      return;
+    }
+    
+    // Ensure walletBal is a number before comparison
+    if (typeof userInvestment?.walletBal !== 'number' || parsedAmount > userInvestment.walletBal) {
+      setNotificationType('error');
+      setNotificationMessage('Insufficient wallet balance. Please deposit funds to proceed.');
+      setShowNotification(true);
+      return; // Stop the investment process for now, show notification.
+    }
+
+    if (parsedAmount > maximumAmount) {
+      setAmountError(`Amount must not exceed ${maximumAmount.toLocaleString()} USDT.`);
+      return;
+    }
+
+    setAmountError("");
+    activatePlan(); // Directly activate if all checks pass
+  };
+
+  const activatePlan = async () => {
+    // --- Add a check here to ensure userId is available before calling API ---
+    if (!userId) {
+      setNotificationType('error');
+      setNotificationMessage('User not authenticated. Please log in again.');
+      setShowNotification(true);
+      return;
+    }
+
+    if (!selectedPlan || !amount || parseFloat(amount) <= 0) {
+      setNotificationType('error');
+      setNotificationMessage('Please select a plan and enter a valid amount.');
+      setShowNotification(true);
+      return;
+    }
+
+    const parsedAmount = parseFloat(amount);
+
+    setActivating(true);
     try {
-      await updateDoc(userRef, {
-        "activePlan.status": newStatus
+      // --- START CONSOLE.LOG ADDITION ---
+      const payloadToSend = {
+        userInvestment: { userId: userId }, // Your API expects userInvestment.userId
+        selectedPlan: selectedPlan,         // Your API expects selectedPlan object
+        amount: parsedAmount                // Your API expects a numeric amount
+      };
+      // console.log("[PROD DEBUG] Payload:", {
+      //   userId,
+      //   selectedPlan,
+      //   selectedPlanPlan: selectedPlan?.plan,
+      //   amount,
+      //   parsedAmount
+      // });
+      
+
+
+      const response = await fetch('/api/activatePlan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payloadToSend), // Use the new payloadToSend variable
       });
-      alert(`Plan ${newStatus} successfully.`);
-    } catch (err) {
-      console.error("Failed to update plan status:", err);
-      alert("Error updating plan status.");
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error activating plan.' }));
+        throw new Error(errorData.message || 'Failed to activate plan');
+      }
+
+      await response.json(); // Consume the successful response
+      setShowModal(true);
+      setIsViewingSinglePlanDetails(false);
+      setAmount('');
+      setSelectedPlan(null);
+    } catch (error) {
+      console.error("Error activating plan:", error);
+      setNotificationMessage(`An error occurred while activating plan: ${error.message}`);
+      setNotificationType('error');
+      setShowNotification(true);
+    } finally {
+      setActivating(false);
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 5000);
     }
   };
 
-  const restartCompletedPlan = async () => {
-    if (!currentUser || !userInvestment?.activePlan) return;
-
-    const userRef = doc(db, "INVESTMENT", currentUser.uid);
-
-    try {
-      const newPlan = {
-        ...userInvestment.activePlan,
-        daysCompleted: 0,
-        isActive: true,
-        status: "active",
-        startDate: new Date(),
-        endDate: null,
-        nextPayoutDate: null,
-      };
-
-      await updateDoc(userRef, {
-        activePlan: newPlan,
-        activatedOn: new Date(),
-        lockedBal: (userInvestment.lockedBal || 0) + userInvestment.activePlan.amount,
-        walletBal: (userInvestment.walletBal || 0) - userInvestment.activePlan.amount
-      });
-
-      alert("Plan restarted successfully.");
-    } catch (err) {
-      console.error("Failed to restart plan:", err);
-      alert("Error restarting plan.");
-    }
+  const closeSuccessModal = () => {
+    setShowModal(false);
+    router.push('/dashboard');
   };
 
   return (
-    <div className="space-y-8 p-2 lg:p-8">
-      {/* Top Section */}
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center justify-between"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
+    <div className='space-y-8 p-2 lg:p-8'>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center justify-between border-b border-gray-300 pb-8">
         <div>
-          <h2 className="text-sm lg:text-base text-gray-600 mb-2">Investment</h2>
-          <h1 className="text-xl lg:text-3xl font-bold text-blue-900 mb-8">Invested Plans</h1>
-          <h2 className="text-xs lg:text-sm text-gray-600">Summary of your investment</h2>
+          <h1 className="text-xl lg:text-3xl font-bold text-blue-900 mb-8">Investment Plans</h1>
+          <h2 className="text-xs lg:text-sm text-gray-600">Choose your favourite plan and start earning now.</h2>
         </div>
-        <div className="flex justify-start md:justify-end gap-4">
-          <motion.div
-            className="w-[50%] md:w-auto rounded text-sm lg:text-base bg-green-600 hover:bg-green-700 text-white px-4 py-2 flex justify-center items-center gap-2"
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link href={'/dashboard/plans'} className='flex justify-center items-center gap-2'>Invest & Earn <FiArrowRight /></Link>
-          </motion.div>
-          <motion.div
-            className="w-[50%] md:w-auto rounded text-sm lg:text-base bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 flex justify-center items-center gap-2"
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link href={'/dashboard/deposit'} className='flex justify-center items-center gap-2'>Deposit <FiArrowRight /></Link>
-          </motion.div>
-        </div>
-      </motion.div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-        {/* Investment Account Card */}
-        <motion.div
-          className="bg-white shadow-md rounded p-6 relative border-r-[1px] border-gray-200 h-[fit-content]"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Title with Tooltip */}
-          <div className="flex items-center gap-2 mb-4">
-            <h3 className="text-base font-semibold text-gray-800">Investment Account</h3>
-            <div className="group relative">
-              <FiInfo className="text-yellow-600 cursor-pointer" />
-              <div className="absolute hidden group-hover:flex top-full left-1/2 -translate-x-1/2 mt-2 w-64 text-sm bg-yellow-50 text-yellow-800 p-3 shadow-lg border border-yellow-400 z-10">
-                This section shows your available and locked investment funds.
-              </div>
-            </div>
-          </div>
-
-          {/* Amounts */}
-          <div className="mb-6">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-              <div>
-                <div className="text-xl lg:text-2xl font-bold text-blue-900">
-                  {userInvestment?.walletBal?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {userInvestment?.currency}
-                </div>
-                <div className="text-xs text-gray-500">Available Fund</div>
-              </div>
-              <div>
-                <div className="text-xl lg:text-2xl font-bold text-blue-900">
-                  {userInvestment?.lockedBal?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {userInvestment?.currency}
-                </div>
-                <div className="text-xs text-gray-500">Locked Fund</div>
-              </div>
-            </div>
-          </div>
-          <hr className="my-4" />
-
-          {/* Transfer Button */}
-          <motion.div
-            className="w-[100%] md:w-[fit-content] rounded text-sm lg:text-base bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 flex justify-center items-center gap-2"
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link href={'/dashboard/transfer'} className='w-full flex justify-center items-center gap-2'>Transfer <FiArrowRight /></Link>
-          </motion.div>
-        </motion.div>
-
-        {/* Active Plan Card */}
-        <motion.div
-          className="bg-white shadow-md rounded p-6 flex flex-col justify-between mb-4"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Title */}
-          <h3 className="text-base font-semibold text-gray-800 mb-4">Active Plan:</h3>
-
-          {/* Plan Info */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <div className="text-xl font-bold text-green-700 mb-1">
-                {userInvestment?.activePlan?.planName || "N/A"}
-              </div>
-              <div className="text-sm text-gray-500">
-                Activated on: {userInvestment?.activatedOn?.seconds ? new Date(userInvestment.activatedOn.seconds * 1000).toLocaleDateString() : "N/A"}
-              </div>
-              <div className="text-sm text-gray-500">
-                ROI: {(userInvestment?.activePlan?.roiPercent ?? 0) * 100}% / day
-              </div>
-              <div className="text-sm text-gray-500">
-                Days Completed: {userInvestment?.activePlan?.daysCompleted ?? 0} / 7
-              </div>
-              <div className="text-sm text-gray-500">
-                Status: {userInvestment?.activePlan?.status ?? "N/A"}
-              </div>
-            </div>
-
-            {/* Neutral Placeholder Graph */}
-            <div className="w-full sm:w-1/2 h-24 bg-gray-100 rounded flex items-end px-2 gap-2">
-              <div className="bg-blue-400 h-6 w-2 rounded"></div>
-              <div className="bg-green-400 h-10 w-2 rounded"></div>
-              <div className="bg-blue-400 h-5 w-2 rounded"></div>
-              <div className="bg-green-400 h-8 w-2 rounded"></div>
-              <div className="bg-blue-400 h-4 w-2 rounded"></div>
-            </div>
-          </div>
-
-          {/* Control Buttons */}
-          {userInvestment?.activePlan && (
-            <div className="flex gap-2 mt-4 flex-wrap">
-              {/* Resume button */}
-              {userInvestment.activePlan.status === "paused" && (
-                <button
-                  onClick={() => updatePlanStatus("active")}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm"
-                >
-                  Resume Plan
-                </button>
-              )}
-
-              {/* Pause button */}
-              {userInvestment.activePlan.status === "active" && (
-                <button
-                  onClick={() => updatePlanStatus("paused")}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm"
-                >
-                  Pause Plan
-                </button>
-              )}
-
-              {/* Stop button */}
-              {userInvestment.activePlan.status !== "stopped" && (
-                <button
-                  onClick={() => updatePlanStatus("stopped")}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
-                >
-                  Stop Plan
-                </button>
-              )}
-
-              {/* Restart button */}
-              {userInvestment.activePlan.status === "completed" && (
-                <button
-                  onClick={restartCompletedPlan}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"
-                >
-                  Restart Plan
-                </button>
-              )}
-            </div>
-          )}
-
-
-
-          {/* Separator & Button */}
-          <hr className="my-4" />
-          <motion.div
-            className="text-sm bg-gray-200 rounded hover:bg-gray-300 text-gray-800 px-4 py-2 w-full sm:w-auto"
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link href={'/dashboard/transactions'} className="text-center block">Transactions</Link>
-          </motion.div>
-        </motion.div>
       </div>
+
+      {userInvestment?.activePlan?.isActive && (
+        <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-8">
+          <h3 className="text-lg font-semibold text-blue-900 mb-2">Your Active Plan</h3>
+          <p className="text-sm text-gray-600 mb-1">Plan: {userInvestment.activePlan.planName}</p>
+          <p className="text-sm text-gray-600 mb-1">Amount: {userInvestment.activePlan.amount} USDT</p>
+          <p className="text-sm text-gray-600 mb-1">Daily ROI: 4%</p>
+          <p className="text-sm text-gray-600 mb-1">Days Completed: {userInvestment.activePlan.daysCompleted}</p>
+          {userInvestment.activePlan.daysCompleted >= 7 && (
+            <button
+              className="mt-3 bg-green-600 text-white py-2 px-4 rounded"
+              onClick={() => handleInvestNow(plans.find(p => p.plan === userInvestment.activePlan.planName))}
+            >
+              Restart Investment Cycle
+            </button>
+          )}
+        </div>
+      )}
+
+      {isViewingSinglePlanDetails && selectedPlan ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+          className="bg-white rounded-lg shadow-lg p-6 space-y-4"
+        >
+          <button onClick={handleBackToPlans} className="text-blue-600 hover:underline mb-4 text-sm">← Back to all plans</button>
+
+          <h3 className="text-xl lg:text-2xl font-bold text-blue-900">{selectedPlan.plan}</h3>
+          <p className="text-sm lg:text-base text-gray-600">{selectedPlan.subTitle}</p>
+          <p className="text-gray-700 mt-2">{selectedPlan.description}</p>
+
+          <div className="border-t border-gray-300 my-4" />
+
+          <div className="flex justify-between items-center text-sm lg:text-base">
+            <div>
+              <div className="font-bold">{selectedPlan.roi}</div>
+              <div className="text-gray-500">Weekly ROI</div>
+            </div>
+            <div>
+              <span className="font-bold">
+                {selectedPlan.highlights.find(h => h.includes('Duration'))?.split(': ')[1]}
+              </span>
+              <div className="text-gray-500">Duration</div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-300 my-4" />
+
+          <ul className="space-y-2">
+            {selectedPlan.highlights?.map((highlight, index) => {
+              const [label, value] = highlight.split(': ');
+              return (
+                <li key={index} className="flex justify-between text-sm text-gray-600">
+                  <span>{label}</span>
+                  <span>-</span>
+                  <span>{value}</span>
+                </li>
+              );
+            })}
+            {selectedPlan.points?.map((point, index) => (
+              point.enabled && (
+                <li key={`point-${index}`} className="flex items-center text-sm text-gray-600">
+                  <FiCheckCircle className="text-green-500 mr-2" />
+                  <span>{point.text}</span>
+                </li>
+              )
+            ))}
+          </ul>
+
+          <div className="border-t border-gray-300 my-4" />
+
+          <div className="space-y-3">
+            <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+              Enter Investment Amount (USDT)
+            </label>
+            <input
+              type="number"
+              id="amount"
+              value={amount}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setAmountError("");
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              placeholder={`Min: ${parseFloat(selectedPlan.highlights.find(h => h.includes('Minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) || 0} USDT`}
+              min={parseFloat(selectedPlan.highlights.find(h => h.includes('Minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, ""))}
+              disabled={activating}
+            />
+            {amountError && <p className="text-red-500 text-xs mt-1">{amountError}</p>}
+            
+            <p className="text-sm text-gray-600">
+              Your Wallet Balance:{" "}
+              <span className="font-semibold text-blue-800">
+                {userInvestment?.walletBal?.toLocaleString() || "0"} USDT
+              </span>
+            </p>
+
+            <div className="flex space-x-4 mt-6">
+                <button
+                    onClick={handleContinue}
+                    className={`flex-1 py-3 px-4 rounded-md font-medium text-white transition ${activating ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                    disabled={activating}
+                >
+                    {activating ? (
+                        <div className="flex items-center justify-center">
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Activating...
+                        </div>
+                    ) : (
+                        "Confirm Investment"
+                    )}
+                </button>
+            </div>
+            {showNotification && notificationType === 'error' && notificationMessage.includes('Insufficient') && (
+                <button
+                    onClick={() => router.push('/dashboard/deposit')}
+                    className="mt-4 w-full py-3 px-4 rounded-md font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 transition"
+                >
+                    Go to Deposit Page
+                </button>
+            )}
+          </div>
+        </motion.div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {plans.map(plan => (
+            <div key={plan.id} className="bg-white rounded shadow-lg p-6">
+              <h3 className="text-base lg:text-lg font-semibold text-blue-900">{plan.plan}</h3>
+              <p className="text-xs lg:text-sm text-gray-600">{plan.subTitle}</p>
+              <div className="border-t border-gray-300 mt-4 mb-2 lg:mt-6 lg:mb-4" />
+              <div className='w-full flex justify-between items-center'>
+                <div className="my-4">
+                  <div className="text-base lg:text-xl font-bold text-blue-900">{plan.roi}</div>
+                  <div className="text-xs text-gray-500">Weekly ROI</div>
+                </div>
+                <div className="my-4">
+                  <span className="text-base lg:text-xl font-bold text-blue-900">
+                    {plan.highlights.find(h => h.includes('Duration'))?.split(': ')[1]}
+                  </span>
+                  <div className="text-xs text-gray-500">Duration</div>
+                </div>
+              </div>
+              <div className="border-t border-gray-300 mt-2 mb-4 lg:mt-6 lg:mb-6" />
+              <ul className="space-y-2">
+                {plan.highlights?.map((highlight, index) => {
+                  const [label, value] = highlight.split(': ');
+                  return (
+                    <li key={index} className="flex justify-between text-xs text-gray-600">
+                      <span>{label}</span>
+                      <span>-</span>
+                      <span>{value}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <button
+                onClick={() => handleInvestNow(plan)}
+                className={`${plan.buttonStyle} w-full mt-4 py-2 rounded font-medium text-sm lg:text-base`}
+              >
+                Invest Now
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showNotification && (
+        <Notification
+          type={notificationType}
+          message={notificationMessage}
+          onClose={() => setShowNotification(false)}
+          show={true}
+        />
+      )}
+
+      {/* Success Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white p-6 shadow-lg rounded text-center w-full max-w-sm space-y-4">
+            <FiCheckCircle size={40} className="text-green-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Success!</h3>
+            <p className="text-sm text-gray-600">Your investment plan has been activated successfully.</p>
+            <button
+              onClick={closeSuccessModal}
+              className="text-sm rounded bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 w-full"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default PlanPurchase;
