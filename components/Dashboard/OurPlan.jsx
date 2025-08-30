@@ -55,11 +55,11 @@ const OurPlan = () => {
     if (!selectedPlan) return;
 
     const minimumAmount = parseFloat(
-      selectedPlan.highlights?.find(h => h.includes('Minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")
+      selectedPlan.highlights?.find(h => h.toLowerCase().includes('minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")
     ) || 0;
 
     const maximumAmount = parseFloat(
-      selectedPlan.highlights?.find(h => h.includes('Maximum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")
+      selectedPlan.highlights?.find(h => h.toLowerCase().includes('maximum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")
     ) || Infinity;
 
     const parsedAmount = parseFloat(amount);
@@ -181,51 +181,80 @@ const OurPlan = () => {
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {plans.map(plan => (
-            <motion.div
-              key={plan.id}
-              className="bg-white rounded-lg shadow-lg p-6 flex flex-col justify-between hover:shadow-2xl transition-all duration-300"
-              whileHover={{ scale: 1.05 }}
-            >
-              <div>
-                <h3 className="text-base lg:text-lg font-semibold text-blue-900">{plan.plan}</h3>
-                <p className="text-xs lg:text-sm text-gray-500 mb-2">{plan.subTitle}</p>
-                <p className="text-sm text-gray-700 mb-3">{plan.description}</p>
+          {plans.map(plan => {
+            // Parse details from highlights safely for display
+            const roiHighlight = plan.highlights?.find(h => /roi/i.test(h));
+            const roiText = plan.roi ?? (roiHighlight ? roiHighlight.split(': ')[1] : null) ?? 'N/A';
 
-                <ul className="space-y-1">
-                  {plan.highlights?.map((highlight, idx) => {
-                    const [label, value] = highlight.split(': ');
-                    return (
-                      <li key={idx} className="flex justify-between text-xs text-gray-600">
-                        <span>{label}</span>
-                        <span>-</span>
-                        <span>{value}</span>
-                      </li>
-                    );
-                  })}
+            const durationHighlight = plan.highlights?.find(h => h.toLowerCase().includes('duration'));
+            const durationText = durationHighlight ? durationHighlight.split(': ')[1] : (plan.duration ?? 'N/A');
 
-                  {plan.points?.map((point, idx) => point.enabled && (
-                    <li key={idx} className="flex items-center text-xs text-gray-600">
-                      <FiCheckCircle className="text-green-500 mr-2" />
-                      <span>{point.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            const minimumHighlight = plan.highlights?.find(h => h.toLowerCase().includes('minimum'));
+            const minimumText = minimumHighlight ? minimumHighlight.split(': ')[1] : (plan.minimum ?? 'N/A');
 
-              <button
-                onClick={() => handleInvestNow(plan)}
-                disabled={!plan.enabled || activating}
-                className={`mt-4 py-2 rounded font-medium transition ${
-                  plan.enabled
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                }`}
+            return (
+              <motion.div
+                key={plan.id}
+                className="bg-white rounded-lg shadow-lg p-6 flex flex-col justify-between hover:shadow-2xl transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
               >
-                {plan.enabled ? 'Invest Now' : 'Unavailable'}
-              </button>
-            </motion.div>
-          ))}
+                <div>
+                  <h3 className="text-base lg:text-lg font-semibold text-blue-900">{plan.plan}</h3>
+                  <p className="text-xs lg:text-sm text-gray-500 mb-2">{plan.subTitle}</p>
+
+                  {/* Restored prominent plan details (ROI, Duration, Minimum) */}
+                  <div className="flex items-center justify-between mb-3 gap-4">
+                    <div>
+                      <div className="text-lg font-bold text-green-600">{roiText}</div>
+                      <div className="text-xs text-gray-500">ROI</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold">{durationText}</div>
+                      <div className="text-xs text-gray-500">Duration</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">{minimumText}</div>
+                      <div className="text-xs text-gray-500">Minimum</div>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-700 mb-3">{plan.description}</p>
+
+                  <ul className="space-y-1">
+                    {plan.highlights?.map((highlight, idx) => {
+                      const [label, value] = highlight.split(': ');
+                      return (
+                        <li key={idx} className="flex justify-between text-xs text-gray-600">
+                          <span>{label}</span>
+                          <span>-</span>
+                          <span>{value}</span>
+                        </li>
+                      );
+                    })}
+
+                    {plan.points?.map((point, idx) => point.enabled && (
+                      <li key={idx} className="flex items-center text-xs text-gray-600">
+                        <FiCheckCircle className="text-green-500 mr-2" />
+                        <span>{point.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <button
+                  onClick={() => handleInvestNow(plan)}
+                  disabled={!plan.enabled || activating}
+                  className={`mt-4 py-2 rounded font-medium transition ${
+                    plan.enabled
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  }`}
+                >
+                  {plan.enabled ? 'Invest Now' : 'Unavailable'}
+                </button>
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
