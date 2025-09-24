@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import { collection, onSnapshot } from 'firebase/firestore';
 import db from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useFirebase } from '@/lib/firebaseContext'; // Import useFirebase
+import { useFirebase } from '@/lib/firebaseContext';
 import Notification from '../Notification/notification';
 import { useRouter } from 'next/router';
 
@@ -15,7 +15,7 @@ const PlanPurchase = () => {
   const [amount, setAmount] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [amountError, setAmountError] = useState("");
-  const { userInvestment, userId } = useFirebase(); // Get userId alongside userInvestment
+  const { userInvestment, userId } = useFirebase();
   const [activating, setActivating] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationType, setNotificationType] = useState('');
@@ -23,7 +23,6 @@ const PlanPurchase = () => {
   const router = useRouter();
 
   const [isViewingSinglePlanDetails, setIsViewingSinglePlanDetails] = useState(false);
-
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'MANAGE_PLAN'), (snapshot) => {
@@ -36,14 +35,15 @@ const PlanPurchase = () => {
     return () => unsubscribe();
   }, []);
 
-  const slideVariants = {
-    initial: { x: "100%", opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    exit: { x: "-100%", opacity: 0 },
-    transition: { type: "spring", stiffness: 300, damping: 30 },
-  };
-
   const handleInvestNow = (plan) => {
+    // Prevent investing if already have active plan
+    if (userInvestment?.activePlan?.isActive) {
+      setNotificationType('error');
+      setNotificationMessage('You already have an active investment plan. Please manage your current plan first.');
+      setShowNotification(true);
+      return;
+    }
+    
     setSelectedPlan(plan);
     setAmount('');
     setAmountError('');
@@ -58,10 +58,16 @@ const PlanPurchase = () => {
   };
 
   const handleContinue = () => {
+    // Prevent continuing if already have active plan
+    if (userInvestment?.activePlan?.isActive) {
+      setNotificationType('error');
+      setNotificationMessage('You already have an active investment plan. Please manage your current plan first.');
+      setShowNotification(true);
+      return;
+    }
+
     if (!selectedPlan) return;
 
-    // Make sure 'highlights' is an array and contains strings that can be parsed.
-    // Example: "Minimum: 100 USDT"
     const minimumAmountHighlight = selectedPlan.highlights?.find(h => h.includes('Minimum'));
     const minimumAmount = minimumAmountHighlight ? parseFloat(minimumAmountHighlight.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) : 0;
     
@@ -80,12 +86,11 @@ const PlanPurchase = () => {
       return;
     }
     
-    // Ensure walletBal is a number before comparison
     if (typeof userInvestment?.walletBal !== 'number' || parsedAmount > userInvestment.walletBal) {
       setNotificationType('error');
       setNotificationMessage('Insufficient wallet balance. Please deposit funds to proceed.');
       setShowNotification(true);
-      return; // Stop the investment process for now, show notification.
+      return;
     }
 
     if (parsedAmount > maximumAmount) {
@@ -94,11 +99,10 @@ const PlanPurchase = () => {
     }
 
     setAmountError("");
-    activatePlan(); // Directly activate if all checks pass
+    activatePlan();
   };
 
   const activatePlan = async () => {
-    // --- Add a check here to ensure userId is available before calling API ---
     if (!userId) {
       setNotificationType('error');
       setNotificationMessage('User not authenticated. Please log in again.');
@@ -117,26 +121,16 @@ const PlanPurchase = () => {
 
     setActivating(true);
     try {
-      // --- START CONSOLE.LOG ADDITION ---
       const payloadToSend = {
-        userInvestment: { userId: userId }, // Your API expects userInvestment.userId
-        selectedPlan: selectedPlan,         // Your API expects selectedPlan object
-        amount: parsedAmount                // Your API expects a numeric amount
+        userId: userId,
+        selectedPlan: selectedPlan,
+        amount: parsedAmount
       };
-      // console.log("[PROD DEBUG] Payload:", {
-      //   userId,
-      //   selectedPlan,
-      //   selectedPlanPlan: selectedPlan?.plan,
-      //   amount,
-      //   parsedAmount
-      // });
-      
-
 
       const response = await fetch('/api/activatePlan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payloadToSend), // Use the new payloadToSend variable
+        body: JSON.stringify(payloadToSend),
       });
 
       if (!response.ok) {
@@ -144,11 +138,16 @@ const PlanPurchase = () => {
         throw new Error(errorData.message || 'Failed to activate plan');
       }
 
-      await response.json(); // Consume the successful response
+      await response.json();
       setShowModal(true);
       setIsViewingSinglePlanDetails(false);
       setAmount('');
       setSelectedPlan(null);
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
     } catch (error) {
       console.error("Error activating plan:", error);
       setNotificationMessage(`An error occurred while activating plan: ${error.message}`);
@@ -181,8 +180,8 @@ const PlanPurchase = () => {
           <h3 className="text-lg font-semibold text-blue-900 mb-2">Your Active Plan</h3>
           <p className="text-sm text-gray-600 mb-1">Plan: {userInvestment.activePlan.planName}</p>
           <p className="text-sm text-gray-600 mb-1">Amount: {userInvestment.activePlan.amount} USDT</p>
-          <p className="text-sm text-gray-600 mb-1">Daily ROI: 4%</p>
-          <p className="text-sm text-gray-600 mb-1">Days Completed: {userInvestment.activePlan.daysCompleted}</p>
+          <p className="text-sm text-gray-600 mb-1">Daily ROI: {Number((userInvestment.activePlan.roiPercent * 100).toFixed(2))}%</p>
+          <p className="text-sm text-gray-600 mb-1">Days Completed: {userInvestment.activePlan.daysCompleted}/7</p>
           {userInvestment.activePlan.daysCompleted >= 7 && (
             <button
               className="mt-3 bg-green-600 text-white py-2 px-4 rounded"
@@ -263,7 +262,7 @@ const PlanPurchase = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder={`Min: ${parseFloat(selectedPlan.highlights.find(h => h.includes('Minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, "")) || 0} USDT`}
               min={parseFloat(selectedPlan.highlights.find(h => h.includes('Minimum'))?.split(': ')[1]?.replace(/[^0-9.-]+/g, ""))}
-              disabled={activating}
+              disabled={activating || userInvestment?.activePlan?.isActive}
             />
             {amountError && <p className="text-red-500 text-xs mt-1">{amountError}</p>}
             
@@ -277,17 +276,13 @@ const PlanPurchase = () => {
             <div className="flex space-x-4 mt-6">
                 <button
                     onClick={handleContinue}
-                    className={`flex-1 py-3 px-4 rounded-md font-medium text-white transition ${activating ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-                    disabled={activating}
+                    disabled={activating || userInvestment?.activePlan?.isActive}
+                    className={`flex-1 py-3 px-4 rounded-md font-medium text-white transition ${
+                      activating || userInvestment?.activePlan?.isActive ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
                 >
-                    {activating ? (
-                        <div className="flex items-center justify-center">
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                            Activating...
-                        </div>
-                    ) : (
-                        "Confirm Investment"
-                    )}
+                    {userInvestment?.activePlan?.isActive ? 'Active Plan Running' : 
+                     activating ? 'Activating...' : 'Confirm Investment'}
                 </button>
             </div>
             {showNotification && notificationType === 'error' && notificationMessage.includes('Insufficient') && (
@@ -334,9 +329,12 @@ const PlanPurchase = () => {
               </ul>
               <button
                 onClick={() => handleInvestNow(plan)}
-                className={`${plan.buttonStyle} w-full mt-4 py-2 rounded font-medium text-sm lg:text-base`}
+                disabled={userInvestment?.activePlan?.isActive}
+                className={`${plan.buttonStyle} w-full mt-4 py-2 rounded font-medium text-sm lg:text-base ${
+                  userInvestment?.activePlan?.isActive ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                Invest Now
+                {userInvestment?.activePlan?.isActive ? 'Active Plan Running' : 'Invest Now'}
               </button>
             </div>
           ))}
@@ -352,7 +350,6 @@ const PlanPurchase = () => {
         />
       )}
 
-      {/* Success Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-white p-6 shadow-lg rounded text-center w-full max-w-sm space-y-4">

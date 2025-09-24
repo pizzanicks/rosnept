@@ -1,4 +1,3 @@
-// components/Dashboard/OurPlan.jsx
 import React, { useState, useEffect } from 'react';
 import { FiCheckCircle, FiPause, FiPlay, FiStopCircle, FiRefreshCw } from 'react-icons/fi';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
@@ -30,18 +29,22 @@ const OurPlan = () => {
       const fetchedPlans = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(plan => plan.enabled);
-     
-
       setPlans(fetchedPlans);
     });
     return () => unsubscribe();
   }, []);
 
+  // Check if a plan is the currently active plan
+  const isActivePlan = (plan) => {
+    return userInvestment?.activePlan?.isActive && 
+           userInvestment.activePlan.planName === plan.plan;
+  };
+
   if (loading) return <p>Loading plans...</p>;
   if (!userId) return <p>Please login to view investment plans.</p>;
 
   const handleInvestNow = (plan) => {
-    if (userInvestment?.activePlan?.isActive) {
+    if (userInvestment?.activePlan?.isActive && !isActivePlan(plan)) {
       setNotificationType('error');
       setNotificationMessage('You already have an active investment plan. Please manage your current plan first.');
       setShowNotification(true);
@@ -132,12 +135,11 @@ const OurPlan = () => {
       setIsViewingSinglePlanDetails(false);
       setSelectedPlan(null);
       setAmount('');
-      // In activatePlan function, add this after setAmount(''):
-
-// Add this page reload:
-setTimeout(() => {
-  window.location.reload();
-}, 1000);
+      
+      // Page reload to update UI
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
       
     } catch (error) {
       console.error("Error activating plan:", error);
@@ -161,7 +163,7 @@ setTimeout(() => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: userId,
-          action: action // 'pause', 'resume', 'stop', 'restart'
+          action: action
         })
       });
 
@@ -175,11 +177,10 @@ setTimeout(() => {
       setNotificationType('success');
       setNotificationMessage(result.message);
       setShowNotification(true);
-       setTimeout(() => {
-      window.location.reload();
-    }, 1000);
-    
       
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
       
     } catch (error) {
       console.error(`Error ${action}ing plan:`, error);
@@ -223,7 +224,7 @@ setTimeout(() => {
             <div>
               <p className="text-sm"><strong>Plan:</strong> {userInvestment.activePlan.planName}</p>
               <p className="text-sm"><strong>Amount:</strong> {userInvestment.activePlan.amount} USDT</p>
-              <p className="text-sm"><strong>Daily ROI:</strong> {(userInvestment.activePlan.roiPercent * 100)}%</p>
+              <p className="text-sm"><strong>Daily ROI:</strong> {Number((userInvestment.activePlan.roiPercent * 100).toFixed(2))}%</p>
             </div>
             <div>
               <p className="text-sm"><strong>Days:</strong> {userInvestment.activePlan.daysCompleted || 0}/7</p>
@@ -300,11 +301,13 @@ setTimeout(() => {
           handleContinue={handleContinue}
           walletBal={userInvestment?.walletBal}
           hasActivePlan={userInvestment?.activePlan?.isActive}
+          isActivePlan={isActivePlan(selectedPlan)}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map(plan => {
-            const isDisabled = !plan.enabled || userInvestment?.activePlan?.isActive;
+            const active = isActivePlan(plan);
+            const isDisabled = !plan.enabled || (userInvestment?.activePlan?.isActive && !active);
             
             const roiHighlight = plan.highlights?.find(h => /roi/i.test(h));
             const roiText = plan.roi ?? (roiHighlight ? roiHighlight.split(': ')[1] : null) ?? 'N/A';
@@ -318,24 +321,37 @@ setTimeout(() => {
             return (
               <motion.div
                 key={plan.id}
-                className="bg-white rounded-lg shadow-lg p-6 flex flex-col justify-between hover:shadow-2xl transition-all duration-300"
-                whileHover={isDisabled ? {} : { scale: 1.05 }}
+                className={`rounded-lg p-6 flex flex-col justify-between transition-all duration-300 ${
+                  active 
+                    ? 'bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-400 shadow-xl transform scale-105' 
+                    : 'bg-white shadow-lg hover:shadow-2xl'
+                }`}
+                whileHover={isDisabled ? {} : { scale: active ? 1.05 : 1.02 }}
               >
+                {/* Active Plan Badge */}
+                {active && (
+                  <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
+                    ACTIVE
+                  </div>
+                )}
+                
                 <div>
-                  <h3 className="text-base lg:text-lg font-semibold text-blue-900">{plan.plan}</h3>
+                  <h3 className={`text-base lg:text-lg font-semibold ${active ? 'text-green-700' : 'text-blue-900'}`}>
+                    {plan.plan}
+                  </h3>
                   <p className="text-xs lg:text-sm text-gray-500 mb-2">{plan.subTitle}</p>
 
                   <div className="flex items-center justify-between mb-3 gap-4">
                     <div>
-                      <div className="text-lg font-bold text-green-600">{roiText}</div>
+                      <div className={`text-lg font-bold ${active ? 'text-green-600' : 'text-green-600'}`}>{roiText}</div>
                       <div className="text-xs text-gray-500">ROI</div>
                     </div>
                     <div>
-                      <div className="text-sm font-semibold">{durationText}</div>
+                      <div className={`text-sm font-semibold ${active ? 'text-green-600' : 'text-gray-700'}`}>{durationText}</div>
                       <div className="text-xs text-gray-500">Duration</div>
                     </div>
                     <div>
-                      <div className="text-sm font-medium">{minimumText}</div>
+                      <div className={`text-sm font-medium ${active ? 'text-green-600' : 'text-gray-700'}`}>{minimumText}</div>
                       <div className="text-xs text-gray-500">Minimum</div>
                     </div>
                   </div>
@@ -365,14 +381,17 @@ setTimeout(() => {
 
                 <button
                   onClick={() => handleInvestNow(plan)}
-                  disabled={isDisabled}
+                  disabled={isDisabled || active}
                   className={`mt-4 py-2 rounded font-medium transition ${
-                    isDisabled
-                      ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    active 
+                      ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg cursor-not-allowed' 
+                      : isDisabled
+                        ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }`}
                 >
-                  {userInvestment?.activePlan?.isActive ? 'Active Plan Running' : 
+                  {active ? 'Manage Active Plan' : 
+                   userInvestment?.activePlan?.isActive ? 'Active Plan Running' : 
                    plan.enabled ? 'Invest Now' : 'Unavailable'}
                 </button>
               </motion.div>
@@ -406,7 +425,7 @@ setTimeout(() => {
 };
 
 // Modal component for single plan details
-const SinglePlanDetailModal = ({ plan, amount, setAmount, amountError, activating, handleBack, handleContinue, walletBal, hasActivePlan }) => (
+const SinglePlanDetailModal = ({ plan, amount, setAmount, amountError, activating, handleBack, handleContinue, walletBal, hasActivePlan, isActivePlan }) => (
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-auto p-4">
     <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4">
       <h3 className="text-xl font-bold text-blue-900">{plan.plan}</h3>
@@ -439,10 +458,11 @@ const SinglePlanDetailModal = ({ plan, amount, setAmount, amountError, activatin
           onChange={(e) => setAmount(e.target.value)}
           className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           min="0"
-          disabled={hasActivePlan}
+          disabled={hasActivePlan && !isActivePlan}
         />
         {amountError && <p className="text-red-500 text-sm mt-1">{amountError}</p>}
-        {hasActivePlan && <p className="text-yellow-600 text-sm mt-1">You have an active plan. Complete it first.</p>}
+        {hasActivePlan && !isActivePlan && <p className="text-yellow-600 text-sm mt-1">You have an active plan. Complete it first.</p>}
+        {isActivePlan && <p className="text-green-600 text-sm mt-1">You can restart this plan after completion.</p>}
       </div>
 
       <div className="flex justify-between mt-4">
@@ -454,12 +474,14 @@ const SinglePlanDetailModal = ({ plan, amount, setAmount, amountError, activatin
         </button>
         <button
           onClick={handleContinue}
-          disabled={activating || hasActivePlan}
+          disabled={activating || (hasActivePlan && !isActivePlan)}
           className={`py-2 px-4 rounded font-medium transition ${
-            activating || hasActivePlan ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'
+            activating || (hasActivePlan && !isActivePlan) ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'
           }`}
         >
-          {activating ? 'Activating...' : hasActivePlan ? 'Active Plan Running' : 'Continue'}
+          {activating ? 'Activating...' : 
+           hasActivePlan && !isActivePlan ? 'Active Plan Running' : 
+           isActivePlan ? 'Restart Plan' : 'Continue'}
         </button>
       </div>
     </div>
