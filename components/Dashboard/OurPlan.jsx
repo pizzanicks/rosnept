@@ -152,7 +152,7 @@ const OurPlan = () => {
     }
   };
 
-  // New function to manage active plan (pause/stop/restart)
+  // New function to manage active plan (pause/stop/resume)
   const manageActivePlan = async (action) => {
     if (!userId || !userInvestment?.activePlan) return;
 
@@ -186,6 +186,40 @@ const OurPlan = () => {
       console.error(`Error ${action}ing plan:`, error);
       setNotificationType('error');
       setNotificationMessage(`Failed to ${action} plan: ${error.message}`);
+      setShowNotification(true);
+    } finally {
+      setManagingPlan(false);
+      setTimeout(() => setShowNotification(false), 5000);
+    }
+  };
+
+  // NEW: restartPlan function (keeps behavior consistent with other manage functions)
+  const restartPlan = async () => {
+    if (!userId) return;
+    setManagingPlan(true);
+    try {
+      const response = await fetch('/api/restartPlan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error restarting plan.' }));
+        throw new Error(errorData.message || 'Failed to restart plan');
+      }
+
+      const result = await response.json();
+      setNotificationType('success');
+      setNotificationMessage(result.message || 'Plan restarted successfully.');
+      setShowNotification(true);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error('Error restarting plan:', error);
+      setNotificationType('error');
+      setNotificationMessage(`Failed to restart plan: ${error.message}`);
       setShowNotification(true);
     } finally {
       setManagingPlan(false);
@@ -283,6 +317,17 @@ const OurPlan = () => {
                 className="flex items-center bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded text-sm transition"
               >
                 <FiRefreshCw className="mr-1" /> Restart Same Plan
+              </button>
+            )}
+
+            {/* Show Restart button only when plan.status === 'stopped' */}
+            {userInvestment?.activePlan?.status === 'stopped' && (
+              <button
+                onClick={restartPlan}
+                disabled={managingPlan}
+                className="flex items-center bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded text-sm transition"
+              >
+                <FiRefreshCw className="mr-1" /> Restart Plan
               </button>
             )}
           </div>

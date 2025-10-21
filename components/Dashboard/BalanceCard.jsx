@@ -10,7 +10,11 @@ export default function BalanceCard() {
   const { userData, userInvestment, userWallets, userHistory } = useFirebase();
 
   console.log("dataaaaa:", userHistory);
-  
+
+  // ✅ Safely handle roiBalance (in case it’s missing)
+const roiBalance = userInvestment?.roiBalance ? Number(userInvestment.roiBalance) : 0;
+const walletBalance = userInvestment?.walletBal ? Number(userInvestment.walletBal) : 0;
+
 
   // Check for missing userData fields
   useEffect(() => {
@@ -31,55 +35,38 @@ export default function BalanceCard() {
     }
   }, [userWallets]);
 
-
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
   
   const depositSummary = useMemo(() => {
-    const summary = {
-      total: 0,
-      thisMonth: 0,
-    };
-  
+    const summary = { total: 0, thisMonth: 0 };
     (userHistory || []).forEach(entry => {
       if (entry.type === "deposit" && entry.status === "completed") {
         summary.total += entry.amount;
-  
         const date = new Date(entry.createdAt);
         if (date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
           summary.thisMonth += entry.amount;
         }
       }
     });
-  
     return summary;
   }, [userHistory, currentYear, currentMonth]);
-  
-  // console.log("Total amount all deposits completed:", totalAmount);
-  // console.log("Total amount this month for deposits completed:", totalThisMonth);
-
 
   const withdrawalSummary = useMemo(() => {
-    const summary = {
-      total: 0,
-      thisMonth: 0,
-    };
-  
+    const summary = { total: 0, thisMonth: 0 };
     (userHistory || []).forEach(entry => {
       if (entry.type === "withdrawal" && entry.status === "completed") {
         summary.total += entry.amount;
-  
         const date = new Date(entry.createdAt);
         if (date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
           summary.thisMonth += entry.amount;
         }
       }
     });
-  
     return summary;
   }, [userHistory, currentYear, currentMonth]);  
-  
+
   return (
     <div className="space-y-8 p-2 lg:p-8">
       {/* Top Section */}
@@ -136,7 +123,6 @@ export default function BalanceCard() {
             >
               Add Account
             </Link>
-
           </motion.div>
         )}
         
@@ -159,7 +145,6 @@ export default function BalanceCard() {
             </Link>
           </motion.div>
         )}
-
       </motion.div>
 
       {/* Account Summary */}
@@ -169,11 +154,11 @@ export default function BalanceCard() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.4 }}
       >
-        {/* Available Balance */}
+        {/* ✅ Available Balance (includes ROI Balance) */}
         <motion.div
           className="p-4 bg-white shadow rounded relative flex flex-col justify-between h-36 lg:h-40"
-          initial={{ opacity: 0, y: 20 }} // Animate from bottom
-          animate={{ opacity: 1, y: 0 }} // Move to normal position
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <div>
@@ -186,16 +171,28 @@ export default function BalanceCard() {
                 </div>
               </div>
             </div>
-            <div className="text-xl lg:text-2xl font-bold mt-2 text-gray-700">{userInvestment?.walletBal?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {userInvestment?.currency}</div>
+
+            {/* ✅ Display wallet balance */}
+            <div className="text-xl lg:text-2xl font-bold mt-2 text-gray-700">
+              {walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {userInvestment?.currency}
+            </div>
+
+            {/* ✅ Display ROI balance underneath */}
+            <div className="text-sm text-gray-500 mt-2">
+              ROI Balance: <span className="font-semibold text-green-600">{roiBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {userInvestment?.currency}</span>
+            </div>
           </div>
-          <div className="text-sm text-gray-500 mt-4">Investment Amount: <span className='font-semibold'>{userInvestment?.lockedBal.toLocaleString()} USDT</span></div>
+
+          <div className="text-sm text-gray-500 mt-4">
+            Investment Amount: <span className='font-semibold'>{userInvestment?.lockedBal?.toLocaleString()} USDT</span>
+          </div>
         </motion.div>
 
         {/* Total Deposit */}
         <motion.div
           className="p-4 bg-white shadow rounded relative flex flex-col justify-between h-36 lg:h-40"
-          initial={{ opacity: 0, x: -20 }} // Animate from left
-          animate={{ opacity: 1, x: 0 }} // Move to normal position
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
           <div>
@@ -210,7 +207,9 @@ export default function BalanceCard() {
             </div>
             <div className="text-xl lg:text-2xl font-bold text-gray-700 mt-2">{depositSummary.total.toLocaleString()} {userInvestment?.currency}</div>
           </div>
-          <div className="text-sm text-gray-500 mt-4">This Month: <span className='font-semibold'>{depositSummary.thisMonth > 0 ? depositSummary.thisMonth.toLocaleString() + " USDT" : "N/A"}</span></div>
+          <div className="text-sm text-gray-500 mt-4">
+            This Month: <span className='font-semibold'>{depositSummary.thisMonth > 0 ? depositSummary.thisMonth.toLocaleString() + " USDT" : "N/A"}</span>
+          </div>
         </motion.div>
 
         {/* Total Withdrawal */}
@@ -224,7 +223,9 @@ export default function BalanceCard() {
             <h4 className="text-gray-600 text-sm">Total Withdrawal</h4>
             <div className="text-xl lg:text-2xl font-bold text-gray-700 mt-2">{withdrawalSummary.total.toLocaleString()} {userInvestment?.currency}</div>
           </div>
-          <div className="text-sm text-gray-500 mt-4">This Month: <span className='font-semibold'>{withdrawalSummary.thisMonth.toLocaleString()} USDT</span></div>
+          <div className="text-sm text-gray-500 mt-4">
+            This Month: <span className='font-semibold'>{withdrawalSummary.thisMonth.toLocaleString()} USDT</span>
+          </div>
         </motion.div>
       </motion.div>
     </div>
