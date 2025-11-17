@@ -42,7 +42,7 @@ const KYCVerification = () => {
     "United States", "United Kingdom", "Canada", "Germany", "France", "Italy", "Spain", "Netherlands", "Sweden",
     "Norway", "Denmark", "Finland", "Switzerland", "Austria", "Belgium", "Ireland", "Portugal", "Greece",
     "Poland", "Czech Republic", "Hungary", "Slovakia", "Slovenia", "Australia", "New Zealand", "Japan",
-    "South Korea", "Singapore", "Malaysia", "Brazil", "Mexico"
+    "South Korea", "Singapore", "Malaysia", "Brazil", "Mexico", "Russia"
   ]
 
   const [formData, setFormData] = useState({
